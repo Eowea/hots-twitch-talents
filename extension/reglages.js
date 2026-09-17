@@ -12,7 +12,11 @@
    ========================================================================= */
 
 window.REGLAGES = {
-  ebs: 'https://localhost:8444',
+  /* Tunnel cloudflared vers l'EBS local. Une adresse de tunnel rapide change
+     à chaque redémarrage de cloudflared : il faut alors la remplacer ici,
+     repousser sur GitHub Pages, et mettre à jour la liste blanche de Twitch.
+     En production, ce sera l'adresse fixe du serveur qui héberge l'EBS. */
+  ebs: 'https://institutes-history-thereof-hunter.trycloudflare.com',
 
   // Le domaine qui sert les icônes et les portraits, à déclarer lui aussi
   // dans la liste blanche, côté images.

@@ -352,7 +352,9 @@ Le port ${PORT} est déjà pris par un autre programme.`);
 
   serveur.listen(PORT, () => {
     console.log(`EBS sur ${tls ? 'https' : 'http'}://localhost:${PORT}`);
-    if (!tls) {
+    // Le mode clair est un choix quand on le demande, un manque sinon.
+    if (sansTls) console.log('Mode clair demandé : prévois un tunnel HTTPS devant.');
+    else if (!tls) {
       console.log('Sans TLS : lance d\'abord serveur-local.js une fois pour créer le certificat.');
     }
     console.log(`${appairages.size} chaîne(s) appairée(s)`);
