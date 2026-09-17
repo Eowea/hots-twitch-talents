@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talents — Heroes of the Storm</title>
+<link rel="stylesheet" href="overlay.css">
+<!-- Le script d'aide de Twitch. Attention : il se charge et définit window.Twitch
+     même hors du lecteur, donc sa présence ne prouve rien. C'est le serveur
+     local, sondé par overlay.js, qui distingue le test du direct. -->
+<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+<script src="reglages.js"></script>
+</head>
+<body>
+
+<!-- Tout est transparent tant que le viewer n'ouvre rien : Twitch refuse les
+     extensions qui masquent durablement la vidéo. -->
+<button id="ouvrir" class="pastille" type="button" aria-expanded="false" aria-controls="tableau">
+  <span class="pastille-hex" aria-hidden="true"></span>
+  <span>TALENTS</span>
+</button>
+
+<div id="tableau" class="tableau" hidden>
+  <div class="cadre">
+    <header class="entete">
+      <span class="titre">TALENTS</span>
+      <span class="filet" aria-hidden="true"></span>
+      <span id="carte" class="carte"></span>
+      <span id="chrono" class="chrono"></span>
+      <span class="pousse"></span>
+      <span id="bans-libelle" class="bans-libelle" hidden>BANNIS</span>
+      <span id="bans" class="bans"></span>
+      <button id="fermer" class="fermer" type="button" aria-label="Fermer le tableau">&#215;</button>
+    </header>
+
+    <div class="corps">
+      <section class="colonne" data-equipe="1">
+        <div class="bandeau"><span class="marque"></span><h2>ÉQUIPE BLEUE</h2></div>
+        <div class="paliers" aria-hidden="true"></div>
+        <div class="lignes"></div>
+      </section>
+      <div class="separateur" aria-hidden="true"></div>
+      <section class="colonne" data-equipe="2">
+        <div class="bandeau"><span class="marque"></span><h2>ÉQUIPE ROUGE</h2></div>
+        <div class="paliers" aria-hidden="true"></div>
+        <div class="lignes"></div>
+      </section>
+    </div>
+
+    <p id="attente" class="attente">En attente d'une partie…</p>
+  </div>
+</div>
+
+<script src="overlay.js"></script>
+</body>
+</html>

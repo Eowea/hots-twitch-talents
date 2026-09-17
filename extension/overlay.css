@@ -1,0 +1,293 @@
+/* =========================================================================
+   OVERLAY TALENTS — habillage
+
+   Les couleurs et les formes viennent de EOWEA BUILDS : le fond profond, l'or,
+   les hexagones des icônes. Les deux couleurs d'équipe sont en plus, calées
+   sur la même clarté pour ne pas écraser l'or.
+
+   La police : Twitch sert l'extension sous une politique de contenu stricte et
+   bloque les polices externes. On reste donc sur une pile système condensée ;
+   embarquer Rajdhani (licence libre) dans l'archive reste possible plus tard.
+   ========================================================================= */
+
+:root {
+  --profond: rgba(13, 10, 38, 0.94);
+  --or: #f0b429;
+  --or-vif: #ffd873;
+  --or-filet: rgba(240, 180, 41, 0.28);
+  --texte: #e0e6ed;
+  --attenue: #9aa5b5;
+  --sourd: #5c7a9a;
+  --equipe-1: #5b8dd9;
+  --equipe-2: #d9645b;
+  --hex: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+
+  /* Dimensions de référence du tableau. Le script les met à l'échelle du
+     lecteur, qui va du plein écran à une petite fenêtre. */
+  --icone: 34px;
+  --portrait: 28px;
+  --nom: 132px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent; /* L'extension ne doit rien masquer par défaut. */
+  font-family: 'Segoe UI Semibold', 'Segoe UI', 'Roboto Condensed', system-ui, sans-serif;
+  color: var(--texte);
+}
+
+/* =========================================================================
+   LE BOUTON — seul élément visible tant que le viewer n'ouvre rien
+   ========================================================================= */
+
+.pastille {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px; /* Cible tactile. */
+  padding: 9px 15px;
+  background: rgba(13, 10, 38, 0.88);
+  border: 1px solid rgba(240, 180, 41, 0.45);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  color: var(--or);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pastille:hover, .pastille:focus-visible { border-color: var(--or); color: var(--or-vif); }
+
+/* Sans cette règle, le display:flex ci-dessus l'emporte sur l'attribut hidden
+   et le bouton reste visible sous le tableau ouvert. */
+.pastille[hidden] { display: none; }
+
+.pastille-hex {
+  width: 17px;
+  height: 17px;
+  clip-path: var(--hex);
+  background: currentColor;
+}
+
+/* =========================================================================
+   LE TABLEAU
+   ========================================================================= */
+
+.tableau {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tableau[hidden] { display: none; }
+
+.cadre {
+  /* Mis à l'échelle depuis le coin haut-gauche de son centrage. */
+  transform: scale(var(--echelle, 1));
+  transform-origin: center center;
+  width: 1010px;
+  background: var(--profond);
+  border: 1px solid var(--or-filet);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75);
+  overflow: hidden;
+}
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(240, 180, 41, 0.2);
+  background: linear-gradient(180deg, rgba(240, 180, 41, 0.07), transparent);
+}
+
+.titre { font-size: 18px; font-weight: 700; color: var(--or); letter-spacing: 0.1em; }
+.filet { width: 1px; height: 20px; background: rgba(240, 180, 41, 0.25); }
+.carte {
+  font-size: 16px;
+  color: var(--texte);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chrono { font-size: 16px; color: var(--attenue); font-variant-numeric: tabular-nums; }
+.pousse { flex-grow: 1; }
+.bans-libelle { font-size: 12px; color: var(--sourd); letter-spacing: 0.1em; }
+
+.bans { display: flex; gap: 5px; }
+
+.bans img {
+  width: 26px;
+  height: 31px;
+  border-radius: 3px;
+  filter: grayscale(1) brightness(0.55);
+}
+
+.fermer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid rgba(226, 216, 255, 0.22);
+  border-radius: 4px;
+  color: var(--attenue);
+  font: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.fermer:hover, .fermer:focus-visible { border-color: var(--or); color: var(--or-vif); }
+
+/* =========================================================================
+   LES DEUX COLONNES
+   ========================================================================= */
+
+.corps { display: flex; gap: 26px; padding: 14px 18px 18px; }
+.colonne { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0; min-width: 0; }
+.separateur { width: 1px; background: rgba(226, 216, 255, 0.1); }
+
+.bandeau { display: flex; align-items: center; gap: 9px; }
+
+.bandeau h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.marque { width: 3px; height: 15px; }
+
+.colonne[data-equipe="1"] .marque { background: var(--equipe-1); }
+.colonne[data-equipe="1"] h2 { color: var(--equipe-1); }
+.colonne[data-equipe="2"] .marque { background: var(--equipe-2); }
+.colonne[data-equipe="2"] h2 { color: var(--equipe-2); }
+
+/* Les niveaux de palier, en tête des colonnes d'icônes. */
+.paliers {
+  display: flex;
+  gap: 6px;
+  padding-left: calc(var(--portrait) + var(--nom) + 34px + 24px);
+}
+
+.paliers span {
+  width: var(--icone);
+  text-align: center;
+  font-size: 12px;
+  color: var(--sourd);
+  letter-spacing: 0.08em;
+}
+
+.lignes { display: flex; flex-direction: column; gap: 6px; }
+
+.ligne { display: flex; align-items: center; gap: 8px; }
+
+.ligne .portrait {
+  width: var(--portrait);
+  height: calc(var(--portrait) * 141 / 120);
+  border-radius: 4px;
+  background: rgba(226, 216, 255, 0.08);
+  object-fit: cover;
+}
+
+.identite { width: var(--nom); overflow: hidden; }
+
+.identite .heros {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--texte);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.identite .tag {
+  font-size: 12px;
+  color: var(--sourd);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.niveau {
+  width: 34px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.ligne[data-equipe="1"] .niveau { color: var(--equipe-1); }
+.ligne[data-equipe="2"] .niveau { color: var(--equipe-2); }
+
+.talents { display: flex; gap: 6px; }
+
+.talents .case {
+  width: var(--icone);
+  height: var(--icone);
+  clip-path: var(--hex);
+  background: rgba(226, 216, 255, 0.05);
+}
+
+.talents img.case { background: none; object-fit: cover; }
+
+/* =========================================================================
+   ETATS
+   ========================================================================= */
+
+.attente {
+  margin: 0;
+  padding: 30px 20px 34px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--sourd);
+}
+
+.cadre.partie .attente { display: none; }
+.cadre:not(.partie) .corps { display: none; }
+
+/* Sur un lecteur étroit, le tableau réduit passe sous le seuil de lisibilité :
+   on n'affiche plus qu'une équipe, avec une bascule. */
+/* Sur un lecteur etroit, l'entete se degarnit : le nom de carte et le libelle
+   des bans passent a la trappe avant que quoi que ce soit ne deborde. */
+.cadre.etroit .carte,
+.cadre.etroit .bans-libelle,
+.cadre.etroit .filet { display: none; }
+
+.cadre.etroit .entete { gap: 12px; padding: 12px 14px; }
+.cadre.etroit .corps { flex-direction: column; gap: 14px; }
+.cadre.etroit .separateur { display: none; }
+.cadre.etroit .colonne[hidden] { display: none; }
+
+.bascule {
+  display: none;
+  margin: 0 18px 16px;
+  padding: 8px;
+  width: calc(100% - 36px);
+  min-height: 44px;
+  background: rgba(226, 216, 255, 0.06);
+  border: 1px solid rgba(226, 216, 255, 0.2);
+  border-radius: 6px;
+  color: var(--texte);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cadre.etroit.partie .bascule { display: block; }

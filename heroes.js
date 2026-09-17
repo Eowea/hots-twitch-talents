@@ -99,6 +99,7 @@ const HERO_TOKENS = [
   [['DemonHunter', 'Valla'], 'Valla'],
   [['Varian'], 'Varian'],
   [['Whitemane'], 'Whitemane'],
+  [['Xalatath', "Xal'atath"], "Xal'atath"],  // Vue dans BUILDS ; identifiant interne a confirmer.
   [['Necromancer', 'Xul'], 'Xul'],
   [['Yrel'], 'Yrel'],
   [['Zagara'], 'Zagara'],

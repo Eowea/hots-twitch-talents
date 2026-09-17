@@ -266,7 +266,7 @@ function apply(game, events) {
 
       case 'HeroBanned':
         // Les bans n'existent qu'en draft, et valent la peine d'être montrés.
-        game.bans.push({ heros: heroName(e.herosId), equipe: e.cible });
+        game.bans.push({ heros: heroName(e.herosId), herosId: e.herosId, equipe: e.cible });
         break;
 
       case 'GameStart':

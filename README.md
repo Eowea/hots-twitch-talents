@@ -22,7 +22,9 @@ Partie à 18m08   bans : Garrosh, Mei, Chromie, Falstad, Ana, Genji
    Li-Ming        MichałDudek#2924   niv 20   WizardAetherWalker > ...
 ```
 
-Reste la partie Twitch : le serveur (EBS) et le panneau.
+L'**overlay et l'EBS sont écrits**. La chaîne complète fonctionne, du fichier
+que le jeu écrit jusqu'au tableau du viewer. Il reste à la brancher sur une
+vraie extension Twitch : identifiants, hébergement, validation.
 
 ## Ce qui a été établi
 
@@ -111,11 +113,15 @@ tracker.events  ->  lecteur  ->  EBS  ->  PubSub  ->  overlay vidéo
    (le jeu)         (Node)      (HTTPS)               (sur le lecteur)
 ```
 
-Trois points déjà tranchés :
+Quatre points déjà tranchés :
 
 - **Extension de type video overlay**, pas panel. Le tableau se déploie sur le
   lecteur au clic, et non sous le stream. On garde ainsi la main sur la taille
   et sur l'ouverture, là où une extension « component » impose son cadre.
+- **Disposition côte à côte** : les deux équipes en deux colonnes, une par
+  moitié de largeur. Le panneau ne prend que la moitié de la hauteur de
+  l'image, au prix d'icônes plus petites. Maquette :
+  https://claude.ai/artifact/1oL7VMMQHpPWaxnqycVrPd
 - **L'état par défaut doit être discret** : un bouton dans un coin, une
   fermeture évidente. Twitch refuse les extensions qui masquent durablement la
   vidéo.
@@ -136,6 +142,13 @@ Trois points déjà tranchés :
 | `mpq.js` | lecteur d'archive MPQ, pour ouvrir un `.StormReplay` |
 | `bzip2.js` | décompression bzip2 en JS pur (Node n'en a pas) |
 | `heroes.js` | dictionnaire de noms de héros |
+| `serveur-local.js` | sert l'overlay et la charge utile, en direct ou en rejeu |
+| `extension/` | l'extension Twitch : overlay, habillage, table des talents |
+| `outils/generer-talents.js` | reconstruit `extension/talents.json` depuis BUILDS |
+| `ebs/serveur.js` | l'EBS : appairage, diffusion PubSub, état courant, statut |
+| `ebs/jwt.js` | signature et vérification HS256, avec le seul module crypto |
+| `ebs/test.js` | le parcours complet de l'EBS, sans Twitch |
+| `pont.js` | tourne sur ton PC : suit la partie et pousse vers l'EBS |
 
 `mpq.js` et `bzip2.js` ne servent pas en direct : ils donnent accès aux replays
 déjà sur le disque, ce qui permet de tester sans lancer le jeu. `bzip2.js` a
@@ -173,17 +186,79 @@ Vérifications :
   tronquée de 1 à 59 octets, et le résultat final **identique** à celui d'une
   lecture unique du fichier complet.
 
+## L'overlay
+
+`extension/video_overlay.html` est l'extension telle que les viewers la
+verront. Pour la voir tourner sans lancer le jeu, en rejouant une vraie partie
+accélérée :
+
+```bash
+node serveur-local.js --demo "chemin/vers/partie.StormReplay" --vitesse 90
+```
+
+Puis ouvrir `https://localhost:8080/`. Sans argument, le serveur suit la partie
+en cours au lieu d'en rejouer une. `--http` sert sans TLS, pour un simple coup
+d'oeil.
+
+Trois choix de conception :
+
+- **La charge utile est compacte** (identifiants bruts, ~2,3 Ko pour dix
+  joueurs) parce que le PubSub de Twitch plafonne à 5 Ko par message. C'est
+  l'overlay qui traduit, avec `extension/talents.json`.
+- **Les images viennent de EOWEA BUILDS** (`eowea.github.io/builds`), pas d'une
+  copie : une seule source de vérité, et elles suivent tes mises à jour. Il
+  faudra déclarer ce domaine dans la liste blanche d'images de la console
+  Twitch.
+- **Le tableau est dessiné à taille fixe puis mis à l'échelle** du lecteur, en
+  largeur et en hauteur. Sous 62 % il ne montre plus qu'une équipe, avec une
+  bascule : à cette taille, les icônes des deux équipes deviennent illisibles.
+
+La table `extension/talents.json` est un instantané de BUILDS. À régénérer
+après une mise à jour du site :
+
+```bash
+node outils/generer-talents.js
+```
+
+## L'EBS
+
+Le service qui relie ton PC aux viewers. Trois rôles, et trois seulement :
+recevoir l'état depuis ton PC, le diffuser par le PubSub de Twitch, et le
+servir à ceux qui ouvrent le tableau en cours de partie — car le PubSub ne
+rejoue pas ce qui est déjà passé.
+
+```bash
+EXT_CLIENT_ID=... EXT_SECRET=... EXT_PROPRIETAIRE=... node ebs/serveur.js
+node pont.js                      # sur ton PC, pendant que tu joues
+node ebs/test.js                  # le parcours complet, sans Twitch
+```
+
+**Les secrets ne sont jamais dans le dépôt.** L'EBS lit le secret de
+l'extension dans son environnement ; ton PC ne le voit pas. Il s'authentifie
+avec un **jeton d'appairage** propre à ta chaîne, que `config.html` te montre
+et que tu peux révoquer. `ebs/appairages.json` et `pont.config.json` sont
+ignorés par git.
+
+Le **retard** est traité aux deux bouts. En direct, l'overlay diffère chaque
+message de `hlsLatencyBroadcaster` secondes, mesurées depuis son arrivée pour
+ne pas dépendre de deux horloges. À l'ouverture du tableau en pleine partie,
+l'overlay demande à l'EBS l'état **tel qu'il était** il y a ce même délai :
+l'EBS garde pour cela les 40 derniers états, soit environ 80 secondes de recul.
+Sans ça, un viewer verrait des talents que son image ne montre pas encore.
+
+`ebs/test.js` déroule le parcours complet avec des jetons forgés : appairage
+refusé à un viewer, publication refusée sans le bon jeton, état retardé,
+signature falsifiée rejetée. Quatorze contrôles, tous au vert.
+
 ## Prochaine étape
 
-La partie Twitch. `live.js` produit déjà le tableau à jour : il reste à le
-pousser vers les viewers.
+Brancher sur la vraie extension.
 
-1. **EBS** — un petit serveur HTTPS qui signe le jeton et relaie vers
-   `POST /helix/extensions/pubsub`. Il faut aussi un point d'entrée « état
-   courant » : le PubSub ne rejoue pas l'historique, donc un viewer qui ouvre
-   le panneau en milieu de partie ne verrait rien.
-2. **Overlay** — le tableau 10 × 7 déployé sur le lecteur, avec les icônes et
-   les libellés de talents de EOWEA BUILDS, à relier aux identifiants internes
-   (`WizardAetherWalker`).
-3. **Tampon de retard** — `hlsLatencyBroadcaster` donne les 10-20 s de décalage
-   du flux ; sans ça les viewers voient les talents avant l'image.
+1. **Identifiants** — créer l'extension dans la console Twitch, en type *Vidéo
+   - Plein écran*, et passer `EXT_CLIENT_ID`, `EXT_SECRET` et
+   `EXT_PROPRIETAIRE` à l'EBS.
+2. **Listes blanches** — déclarer `eowea.github.io` côté images et le domaine
+   de l'EBS côté requêtes, sinon la politique de contenu de Twitch les bloque.
+3. **Hébergement** — l'EBS doit être joignable en HTTPS depuis l'extérieur.
+4. **Police** — Twitch bloque les polices externes. Embarquer Rajdhani (licence
+   libre) dans l'archive remplacerait la pile système actuelle.

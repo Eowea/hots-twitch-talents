@@ -1,3 +1,13 @@
+# Sorties de travail
 dumps/
 captures/
 node_modules/
+
+# Certificat auto-signé du test local
+certs/
+
+# Jetons : ne doivent jamais partir dans le dépôt.
+# appairages.json contient les jetons de toutes les chaînes appairées,
+# pont.config.json celui de ta machine.
+ebs/appairages.json
+pont.config.json
