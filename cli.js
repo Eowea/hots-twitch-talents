@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /* =========================================================================
-   CLI du lecteur de battlelobby
+   CLI du lecteur de jeu
 
+     node cli.js talents        suit la partie en cours et affiche, en direct,
+                                le tableau des talents des dix joueurs
      node cli.js                surveille et affiche chaque nouveau lobby
      node cli.js once           lit le lobby le plus récent déjà présent
      node cli.js dump           lit le lobby et archive tout (copie brute,
@@ -11,8 +13,8 @@
                                 pendant une partie (Ctrl+C pour le rapport)
 
    Options
-     --file <chemin>   force un fichier : un battlelobby brut, ou directement
-                       un .StormReplay (le lobby en est extrait)
+     --file <chemin>   force un fichier : un battlelobby brut, un tracker brut,
+                       ou un .StormReplay (le contenu en est extrait)
      --json            sortie machine, pour le futur pont vers l'extension
      --save            en surveillance, archive aussi chaque lobby capté
    ========================================================================= */
@@ -24,6 +26,9 @@ const path = require('path');
 const bl = require('./battlelobby.js');
 const mpq = require('./mpq.js');
 const { startProbe } = require('./probe.js');
+const tracker = require('./tracker.js');
+const { knowsHero } = require('./heroes.js');
+const live = require('./live.js');
 
 const DUMP_DIR = path.join(__dirname, 'dumps');
 
@@ -35,7 +40,7 @@ function parseArgs(argv) {
   const args = { mode: 'watch', file: null, json: false, save: false, count: 60 };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (['watch', 'once', 'dump', 'autotest', 'probe'].includes(a)) args.mode = a;
+    if (['watch', 'once', 'dump', 'autotest', 'probe', 'talents'].includes(a)) args.mode = a;
     else if (a === '--file') args.file = argv[++i];
     else if (a === '--json') args.json = true;
     else if (a === '--save') args.save = true;
@@ -53,10 +58,10 @@ function parseArgs(argv) {
 
 const MPQ_MAGIC = 0x51504d; // 'MPQ', suivi de 0x1A ou 0x1B
 
-function loadBuffer(filePath) {
+function loadBuffer(filePath, membre = bl.LOBBY_NAME) {
   const raw = fs.readFileSync(filePath);
   const isArchive = raw.length > 4 && (raw.readUInt32LE(0) & 0xffffff) === MPQ_MAGIC;
-  return isArchive ? mpq.extractFile(filePath, bl.LOBBY_NAME) : raw;
+  return isArchive ? mpq.extractFile(filePath, membre) : raw;
 }
 
 async function loadTarget(args) {
@@ -213,6 +218,11 @@ function autotest(limit) {
   let missing = 0;
   let failed = 0;
 
+  const trk = {
+    ok: 0, ko: 0, incomplet: 0, talents: 0, tropDeTalents: 0, sansHeros: 0,
+    inconnus: new Set(),
+  };
+
   for (const file of sample) {
     let buf;
     try {
@@ -229,6 +239,30 @@ function autotest(limit) {
     }
     const n = bl.parseLobby(buf).playerCount;
     counts.set(n, (counts.get(n) || 0) + 1);
+
+    // Le décodeur de talents passe sur le même corpus. Des années de patchs et
+    // tous les modes de jeu : c'est le meilleur test de robustesse qu'on ait.
+    try {
+      const raw = mpq.extractFile(file, 'replay.tracker.events');
+      const stream = new tracker.TrackerStream();
+      const events = stream.push(raw);
+      if (stream.offset !== raw.length) {
+        trk.incomplet++;
+        console.log(`  INCOMPLET ${path.basename(file)} : ${stream.offset}/${raw.length} octets`);
+      }
+
+      const vue = tracker.table(tracker.apply(tracker.newGame(), events));
+      trk.ok++;
+      for (const p of vue.joueurs) {
+        trk.talents += p.talents.length;
+        if (!p.heros) trk.sansHeros++;
+        if (p.talents.length > 7) trk.tropDeTalents++; // Sept paliers, pas plus.
+        if (p.herosId && !knowsHero(p.herosId)) trk.inconnus.add(p.herosId);
+      }
+    } catch (err) {
+      trk.ko++;
+      if (trk.ko <= 5) console.log(`  TRACKER ${path.basename(file)} : ${err.message}`);
+    }
   }
 
   console.log('  Joueurs détectés par partie');
@@ -238,7 +272,79 @@ function autotest(limit) {
   console.log(`\n  Préfixes de longueur justes : ${prefixOk} / ${prefixOk + prefixKo}`);
   if (missing) console.log(`  Replays sans battlelobby     : ${missing}`);
   if (failed) console.log(`  Lectures en échec            : ${failed}`);
+
+  console.log(`\n  Tracker décodé              : ${trk.ok} / ${trk.ok + trk.ko}`);
+  console.log(`  Talents relevés             : ${trk.talents}`);
+  if (trk.incomplet) console.log(`  Flux incomplets             : ${trk.incomplet}`);
+  if (trk.tropDeTalents) console.log(`  Joueurs à plus de 7 talents : ${trk.tropDeTalents}`);
+  if (trk.sansHeros) console.log(`  Joueurs sans héros          : ${trk.sansHeros}`);
+  if (trk.inconnus.size) {
+    console.log(`  Héros hors dictionnaire     : ${[...trk.inconnus].sort().join(', ')}`);
+  }
   console.log('');
+}
+
+/* =========================================================================
+   TABLEAU DES TALENTS
+   C'est la vue que le viewer verra dans le panneau Twitch. Au terminal, on
+   l'affiche telle quelle, une équipe après l'autre.
+   ========================================================================= */
+
+const mmss = (s) => Math.floor(s / 60) + 'm' + String(s % 60).padStart(2, '0');
+
+function printTalents(vue) {
+  console.log('');
+  console.log('─'.repeat(78));
+  console.log('Partie à ' + mmss(vue.seconde)
+    + (vue.bans.length ? '   bans : ' + vue.bans.map((b) => b.heros).join(', ') : ''));
+  console.log('─'.repeat(78));
+
+  let equipe = null;
+  for (const p of vue.joueurs) {
+    if (p.equipe !== equipe) {
+      equipe = p.equipe;
+      console.log('');
+      console.log(`  Équipe ${equipe}`);
+    }
+    const qui = p.battletag || ('joueur ' + p.joueur);
+    console.log('   ' + String(p.heros).padEnd(14) + ' ' + qui.padEnd(20)
+      + ' niv ' + String(p.niveau).padStart(2) + '   ' + p.talents.join(' > '));
+  }
+  console.log('');
+}
+
+function runTalents(args) {
+  // Depuis un fichier : pratique pour revoir une partie déjà jouée.
+  if (args.file) {
+    const raw = loadBuffer(args.file, live.TRACKER_NAME);
+    const partie = tracker.apply(tracker.newGame(), new tracker.TrackerStream().push(raw));
+
+    // Un replay contient aussi le lobby : autant en tirer les vrais pseudos.
+    try {
+      const lobby = bl.parseLobby(loadBuffer(args.file, bl.LOBBY_NAME));
+      live.attachNames(partie, lobby.battletags.map((t) => t.full));
+    } catch {
+      // Pas de lobby dans ce fichier : on affichera les numéros de joueur.
+    }
+
+    const vue = tracker.table(partie);
+    if (args.json) console.log(JSON.stringify(vue, null, 2));
+    else printTalents(vue);
+    return;
+  }
+
+  console.log('Suivi de la partie en cours (' + bl.lobbyRoot() + ')');
+  console.log('Lance ta partie : le tableau se remplira ici. Ctrl+C pour arrêter.');
+
+  live.watchGame((vue) => {
+    if (vue === null) {
+      console.log('');
+      console.log('(partie terminée, le jeu a effacé son dossier)');
+      return;
+    }
+    if (args.json) console.log(JSON.stringify(vue));
+    else printTalents(vue);
+  });
 }
 
 /* =========================================================================
@@ -304,6 +410,7 @@ async function main() {
 
   if (args.mode === 'autotest') return autotest(args.count);
   if (args.mode === 'probe') return runProbe();
+  if (args.mode === 'talents') return runTalents(args);
 
   if (args.mode === 'once' || args.mode === 'dump') {
     const target = await loadTarget(args);

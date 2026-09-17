@@ -35,7 +35,7 @@ const HERO_TOKENS = [
   [['Deckard', 'DeckardCain'], 'Deckard'],
   [['Dehaka'], 'Dehaka'],
   [['Diablo'], 'Diablo'],
-  [['DVa', 'D.Va'], 'D.Va'],
+  [['DVa', 'DVaPilot', 'D.Va'], 'D.Va'],  // Le pilote est une forme a part.
   [['L90ETC', 'ETC'], 'E.T.C.'],
   [['Falstad'], 'Falstad'],
   [['Fenix'], 'Fenix'],
@@ -67,7 +67,7 @@ const HERO_TOKENS = [
   [['Malganis', "Mal'Ganis"], "Mal'Ganis"],
   [['Malthael'], 'Malthael'],
   [['Medivh'], 'Medivh'],
-  [['Mei'], 'Mei'],
+  [['Mei', 'MeiOW'], 'Mei'],
   [['Mephisto'], 'Mephisto'],
   [['Muradin'], 'Muradin'],
   [['Murky'], 'Murky'],
@@ -75,7 +75,7 @@ const HERO_TOKENS = [
   [['Nova'], 'Nova'],
   [['Orphea'], 'Orphea'],
   [['Probius'], 'Probius'],
-  [['Qhira'], 'Qhira'],
+  [['Qhira', 'NexusHunter'], 'Qhira'],  // Son identifiant interne dans les replays.
   [['Ragnaros'], 'Ragnaros'],
   [['Raynor'], 'Raynor'],
   [['Rehgar'], 'Rehgar'],
@@ -88,7 +88,7 @@ const HERO_TOKENS = [
   [['Sylvanas'], 'Sylvanas'],
   [['Tassadar'], 'Tassadar'],
   [['Butcher'], 'The Butcher'],
-  [['LostVikings', 'LostViking'], 'The Lost Vikings'],
+  [['LostVikings', 'LostViking', 'LostVikingsController'], 'The Lost Vikings'],
   [['Thrall'], 'Thrall'],
   [['Tracer'], 'Tracer'],
   [['Tychus'], 'Tychus'],
@@ -111,4 +111,22 @@ const HERO_TOKENS = [
    mot dans un fichier binaire. On les garde, mais signalés comme faibles. */
 const WEAK_TOKEN_LENGTH = 4;
 
-module.exports = { HERO_TOKENS, WEAK_TOKEN_LENGTH };
+/* Table inverse : tout jeton connu mène au nom du héros. C'est elle qui
+   traduit le "HeroCrusader" du tracker en "Johanna". */
+const BY_TOKEN = new Map();
+for (const [tokens, hero] of HERO_TOKENS) {
+  for (const token of tokens) BY_TOKEN.set(token.toLowerCase(), hero);
+}
+
+/* Rend le nom lisible d'un identifiant interne, ou l'identifiant tel quel
+   s'il est inconnu : mieux vaut afficher un nom brut qu'un trou. */
+function knowsHero(id) {
+  return BY_TOKEN.has(String(id || '').replace(/^Hero/, '').toLowerCase());
+}
+
+function heroName(id) {
+  if (!id) return null;
+  return BY_TOKEN.get(String(id).replace(/^Hero/, '').toLowerCase()) || id;
+}
+
+module.exports = { HERO_TOKENS, WEAK_TOKEN_LENGTH, heroName, knowsHero };

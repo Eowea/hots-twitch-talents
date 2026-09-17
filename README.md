@@ -3,14 +3,26 @@
 Extension Twitch qui montre aux viewers, en direct, les talents pris par les
 dix joueurs d'une partie de Heroes of the Storm.
 
-Le viewer ouvre un panneau sous le stream et voit un tableau : dix lignes, sept
-colonnes de talents, mis à jour au fil de la partie.
+Le viewer clique un bouton discret posé sur le lecteur, et un tableau se
+déploie **par-dessus le stream** : les dix joueurs, sept colonnes de talents,
+mis à jour au fil de la partie.
 
 ## État actuel
 
-Le **lecteur de jeu** est écrit et vérifié. Le décodeur de talents reste à
-faire, mais l'essentiel est acquis : on sait où sont les données, et qu'elles
-sont récupérables automatiquement.
+Le **lecteur de jeu est terminé**. Il suit une partie en direct et produit le
+tableau complet : les dix joueurs avec leur pseudo, leur héros, leur niveau,
+leurs talents dans l'ordre, et les bans du draft.
+
+```
+Partie à 18m08   bans : Garrosh, Mei, Chromie, Falstad, Ana, Genji
+
+  Équipe 1
+   Mal'Ganis      YoneOTP#2494       niv 20   MalGanisVampiricTouch > ...
+   Alarak         Playé#2155         niv 20   AlarakOverwhelmingPower > ...
+   Li-Ming        MichałDudek#2924   niv 20   WizardAetherWalker > ...
+```
+
+Reste la partie Twitch : le serveur (EBS) et le panneau.
 
 ## Ce qui a été établi
 
@@ -53,7 +65,20 @@ Blizzard.
 
 Aucune dépendance, aucun `npm install`. Node 18+ suffit.
 
-Surveiller les parties et afficher les joueurs (à lancer **avant** de jouer) :
+Suivre la partie en cours et voir le tableau se remplir (à lancer **avant**
+de jouer) :
+
+```bash
+node cli.js talents
+```
+
+Revoir une partie déjà jouée :
+
+```bash
+node cli.js talents --file "chemin/vers/partie.StormReplay"
+```
+
+Surveiller les lobbies seuls, sans les talents :
 
 ```bash
 node cli.js
@@ -82,25 +107,31 @@ node cli.js once --file "chemin/vers/partie.StormReplay"
 ```
 PC du streamer                      Twitch                    Viewer
 ──────────────                      ──────                    ──────
-tracker.events  ->  lecteur  ->  EBS  ->  PubSub  ->  panneau (tableau)
-   (le jeu)         (Node)      (HTTPS)               318 x 500 px
+tracker.events  ->  lecteur  ->  EBS  ->  PubSub  ->  overlay vidéo
+   (le jeu)         (Node)      (HTTPS)               (sur le lecteur)
 ```
 
-Deux points déjà tranchés :
+Trois points déjà tranchés :
 
-- **Le panneau suffit.** 318 px de large, c'est ~90 px de pseudo + 7 icônes de
-  28 px. Dix lignes de 40 px tiennent dans les 500 px de haut. Pas besoin
-  d'overlay vidéo.
-- **Il faudra retarder l'affichage.** `Twitch.ext.onContext` donne
-  `hlsLatencyBroadcaster` (10-20 s) : sans tampon, les viewers verraient les
-  talents avant l'image du stream.
+- **Extension de type video overlay**, pas panel. Le tableau se déploie sur le
+  lecteur au clic, et non sous le stream. On garde ainsi la main sur la taille
+  et sur l'ouverture, là où une extension « component » impose son cadre.
+- **L'état par défaut doit être discret** : un bouton dans un coin, une
+  fermeture évidente. Twitch refuse les extensions qui masquent durablement la
+  vidéo.
+- **Il faut retarder l'affichage.** `Twitch.ext.onContext` donne
+  `hlsLatencyBroadcaster` (10-20 s). En overlay le tableau est collé à l'image :
+  sans tampon, un talent apparaîtrait avant que le joueur ne le prenne à
+  l'écran.
 
 ## Fichiers
 
 | Fichier | Rôle |
 |---|---|
-| `cli.js` | ligne de commande : `watch`, `once`, `dump`, `probe`, `autotest` |
-| `battlelobby.js` | trouver, lire et dépouiller le fichier de lobby |
+| `cli.js` | ligne de commande : `talents`, `watch`, `once`, `dump`, `probe`, `autotest` |
+| `live.js` | suivi de la partie en cours : c'est ici que le pont Twitch se branchera |
+| `tracker.js` | décodeur de `replay.tracker.events` : héros, niveaux, talents, bans |
+| `battlelobby.js` | trouver, lire et dépouiller le fichier de lobby (les battletags) |
 | `probe.js` | relever ce que le jeu écrit dans `%TEMP%` pendant une partie |
 | `mpq.js` | lecteur d'archive MPQ, pour ouvrir un `.StormReplay` |
 | `bzip2.js` | décompression bzip2 en JS pur (Node n'en a pas) |
@@ -111,18 +142,48 @@ déjà sur le disque, ce qui permet de tester sans lancer le jeu. `bzip2.js` a
 été validé contre le `bzip2` du système (multi-blocs, RLE, fichier vide,
 binaire aléatoire).
 
+## Le décodeur, et comment il a été vérifié
+
+`replay.tracker.events` est au format « versioned struct » : chaque valeur est
+précédée d'un octet qui dit son type. Le flux se décode donc entièrement sans
+disposer du schéma du jeu — on lit la forme, pas un plan.
+
+Ce qu'on en tire, événement par événement :
+
+| Événement | Ce qu'il donne |
+|---|---|
+| `PlayerInit` | l'équipe, et si le joueur est humain ou IA |
+| `PlayerSpawned` | le héros (`HeroCrusader` pour Johanna) |
+| `LevelUp` | le niveau |
+| `TalentChosen` | le talent, par son identifiant interne |
+| id 13 / 14 / 15 | bans, picks et échanges du draft |
+| PlayerSetup (id 9) | le slot, qui relie le joueur à son battletag du lobby |
+
+**Le cas difficile est la lecture pendant l'écriture.** Le jeu écrit par blocs
+de 4 Ko : le dernier événement est presque toujours coupé en plein milieu.
+`TrackerStream` revient alors à la dernière frontière saine et reprend là au
+relevé suivant.
+
+Vérifications :
+
+- **299 / 299** flux décodés intégralement sur un échantillon de 300 replays
+  étalé sur tout le stock, **18 686 talents** relevés, aucun héros inconnu.
+- Les 20 copies d'un `tracker.events` en cours d'écriture (dossier `captures/`,
+  hors git) rejouées une à une à travers un seul flux : chacune avec une queue
+  tronquée de 1 à 59 octets, et le résultat final **identique** à celui d'une
+  lecture unique du fichier complet.
+
 ## Prochaine étape
 
-Le décodeur de `replay.tracker.events`. Le format s'auto-décrit — chaque valeur
-porte son type — donc il se décode sans disposer du schéma du jeu. Deux
-difficultés à traiter :
+La partie Twitch. `live.js` produit déjà le tableau à jour : il reste à le
+pousser vers les viewers.
 
-1. Le fichier est lu **pendant** son écriture : le dernier événement est
-   souvent tronqué en plein milieu. Il faut s'arrêter proprement et reprendre
-   au bon endroit au relevé suivant.
-2. Les noms de talents sont des identifiants internes, à relier aux icônes et
-   aux libellés de EOWEA BUILDS.
-
-Le dossier `captures/` (hors git) contient 20 copies horodatées d'un
-`tracker.events` en cours d'écriture, de 12 à 104 Ko, totalisant 20
-`TalentChosen` — de quoi mettre au point le décodeur, cas tronqué compris.
+1. **EBS** — un petit serveur HTTPS qui signe le jeton et relaie vers
+   `POST /helix/extensions/pubsub`. Il faut aussi un point d'entrée « état
+   courant » : le PubSub ne rejoue pas l'historique, donc un viewer qui ouvre
+   le panneau en milieu de partie ne verrait rien.
+2. **Overlay** — le tableau 10 × 7 déployé sur le lecteur, avec les icônes et
+   les libellés de talents de EOWEA BUILDS, à relier aux identifiants internes
+   (`WizardAetherWalker`).
+3. **Tampon de retard** — `hlsLatencyBroadcaster` donne les 10-20 s de décalage
+   du flux ; sans ça les viewers voient les talents avant l'image.
