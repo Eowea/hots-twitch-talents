@@ -250,6 +250,39 @@ Sans ça, un viewer verrait des talents que son image ne montre pas encore.
 refusé à un viewer, publication refusée sans le bon jeton, état retardé,
 signature falsifiée rejetée. Quatorze contrôles, tous au vert.
 
+## Reprendre après une pause
+
+Trois choses doivent tourner en même temps, chacune dans son terminal :
+
+```bash
+node ebs/serveur.js --http                         # 1. l'EBS
+& "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel --url http://localhost:8444
+node pont.js --dernier --vitesse 5                 # 3. une partie, ou sans --dernier pour la vraie
+```
+
+**Le piège** : une adresse de tunnel rapide change à chaque démarrage de
+cloudflared. Quand elle change, il faut la reporter à trois endroits, sinon
+le panneau reste vide :
+
+1. `extension/reglages.js`, puis commiter et pousser (GitHub Pages sert
+   l'extension) ;
+2. la liste blanche des requêtes, dans la console développeur Twitch ;
+3. `pont.config.json`, sur ton PC.
+
+Une adresse fixe — un vrai hébergement pour l'EBS — supprime les trois.
+
+Pour diagnostiquer, l'EBS journalise chaque appel qu'il reçoit. Un panneau qui
+se charge correctement produit deux lignes :
+
+```
+  00:50:04  OPTIONS /etat -> 204     le contrôle CORS du navigateur
+  00:50:04  GET     /etat -> 200     le panneau reçoit les données
+```
+
+Aucune ligne signifie que la page ne s'exécute pas — le plus souvent un chemin
+de fichier erroné dans la console Twitch, qui renvoie une page 404 invisible
+dans une iframe.
+
 ## Prochaine étape
 
 Brancher sur la vraie extension.
