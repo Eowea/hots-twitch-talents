@@ -52,7 +52,9 @@ const PORT = Number(process.env.EBS_PORT || CONFIG.port || 8444);
 const CLIENT_ID = process.env.EXT_CLIENT_ID || CONFIG.clientId || '';
 const SECRET_B64 = process.env.EXT_SECRET || CONFIG.secret || '';
 const PROPRIETAIRE = process.env.EXT_PROPRIETAIRE || CONFIG.proprietaire || '';
-const APPAIRAGES = path.join(__dirname, 'appairages.json');
+/* Le chemin est reglable pour que les tests n'ecrasent jamais les appairages
+   du serveur reel : les deux tournent sur la meme machine. */
+const APPAIRAGES = process.env.EBS_APPAIRAGES || path.join(__dirname, 'appairages.json');
 
 // Twitch livre le secret en base64 : on le décode une fois pour toutes.
 const SECRET = SECRET_B64 ? Buffer.from(SECRET_B64, 'base64') : null;
@@ -332,7 +334,22 @@ function main() {
     ? { key: fs.readFileSync(cle), cert: fs.readFileSync(cert) }
     : null;
 
+  /* Journal des appels. Sans lui, on ne sait pas distinguer « le panneau
+     n'appelle pas » de « le panneau appelle et reçoit du vide » — et c'est
+     toute la différence quand on cherche une panne. Aucun jeton n'est écrit. */
   const gestionnaire = (requete, reponse) => {
+    const debut = Date.now();
+    const chemin = requete.url.split('?')[0];
+
+    reponse.on('finish', () => {
+      // Le pont publie toutes les deux secondes : on ne le journalise pas,
+      // il noierait le reste.
+      if (chemin === '/publier' && reponse.statusCode === 200) return;
+      const heure = new Date().toLocaleTimeString('fr-FR');
+      console.log(`  ${heure}  ${requete.method} ${chemin} -> ${reponse.statusCode}`
+        + ` (${Date.now() - debut} ms)`);
+    });
+
     router(requete, reponse).catch((err) => {
       console.error(err);
       repondre(reponse, 500, { erreur: 'erreur interne' });

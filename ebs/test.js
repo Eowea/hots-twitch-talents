@@ -23,6 +23,8 @@ const BASE = `http://localhost:${PORT}`;
 const SECRET_B64 = Buffer.from('secret-de-test-pour-l-integration').toString('base64');
 const SECRET = Buffer.from(SECRET_B64, 'base64');
 const CANAL = '123456789';
+// Jamais ebs/appairages.json : ce fichier appartient au serveur reel.
+const FICHIER_TEST = path.join(__dirname, 'appairages.test.json');
 
 const jetonTwitch = (role) => jwt.signer({
   channel_id: CANAL,
@@ -61,6 +63,7 @@ async function main() {
     env: {
       ...process.env,
       EBS_PORT: String(PORT),
+      EBS_APPAIRAGES: FICHIER_TEST,
       EXT_CLIENT_ID: 'client-de-test',
       EXT_SECRET: SECRET_B64,
       EXT_PROPRIETAIRE: '999',
@@ -169,6 +172,7 @@ async function main() {
   verifier('une signature falsifiée est rejetée', alteré, 'le jeton falsifié a été accepté');
 
   serveur.kill();
+  try { require('fs').unlinkSync(FICHIER_TEST); } catch { /* deja absent */ }
   console.log(`\n${echecs === 0 ? 'Tout passe.' : `${echecs} échec(s).`}\n`);
   process.exit(echecs === 0 ? 0 : 1);
 }
