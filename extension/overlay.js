@@ -80,21 +80,30 @@ const urlPortrait = (fichier) => table.base + table.prefixePortrait + fichier;
    RENDU
    ========================================================================= */
 
+/* Ce que chaque case décrit. Une table faible plutôt que des attributs dans
+   le DOM : soixante-dix descriptions de cent caractères n'ont rien à faire
+   dans le document. */
+const talentDeLaCase = new WeakMap();
+
 function creerCase(hero, identifiant) {
   const talent = trouverTalent(hero, identifiant);
+
   if (!talent || !talent.icone) {
     // Talent non traduit : une case pleine vaut mieux qu'un trou, et son
-    // identifiant brut reste lisible au survol.
+    // identifiant brut reste lisible dans l'infobulle.
     const vide = document.createElement('div');
     vide.className = 'case';
-    vide.title = identifiant;
+    vide.tabIndex = 0;
+    talentDeLaCase.set(vide, { brut: identifiant });
     return vide;
   }
+
   const img = document.createElement('img');
   img.className = 'case';
   img.src = urlIcone(talent.icone);
   img.alt = talent.fr;
-  img.title = `${talent.fr} — palier ${talent.niveau}`;
+  img.tabIndex = 0;
+  talentDeLaCase.set(img, talent);
   return img;
 }
 
@@ -190,6 +199,118 @@ function afficher(etat) {
   }
 
   ajuster();
+}
+
+
+/* =========================================================================
+   INFOBULLE
+
+   Le survol d'une case doit dire ce que fait le talent. Un seul element,
+   reutilise, plutot qu'un par case : soixante-dix infobulles dans le document
+   pour une seule visible n'auraient aucun sens.
+
+   On ecoute au niveau du cadre plutot que sur chaque icone — les lignes sont
+   reconstruites a chaque mise a jour, et des ecouteurs poses sur elles
+   disparaitraient avec.
+   ========================================================================= */
+
+let infobulle = null;
+
+function creerInfobulle() {
+  const element = document.createElement('div');
+  element.className = 'infobulle';
+  element.setAttribute('role', 'tooltip');
+  element.hidden = true;
+  document.body.append(element);
+  return element;
+}
+
+function remplirInfobulle(talent) {
+  infobulle.replaceChildren();
+
+  if (talent.brut) {
+    const brut = document.createElement('div');
+    brut.className = 'infobulle-brut';
+    brut.textContent = talent.brut;
+    infobulle.append(brut);
+    return;
+  }
+
+  const entete = document.createElement('div');
+  entete.className = 'infobulle-entete';
+
+  if (talent.icone) {
+    const icone = document.createElement('img');
+    icone.className = 'infobulle-icone';
+    icone.src = urlIcone(talent.icone);
+    icone.alt = '';
+    entete.append(icone);
+  }
+
+  const titres = document.createElement('div');
+  const nom = document.createElement('div');
+  nom.className = 'infobulle-nom';
+  nom.textContent = talent.fr;
+  const palier = document.createElement('div');
+  palier.className = 'infobulle-palier';
+  palier.textContent = `PALIER ${talent.niveau}`;
+  titres.append(nom, palier);
+  entete.append(titres);
+  infobulle.append(entete);
+
+  const texte = document.createElement('div');
+  texte.className = 'infobulle-texte';
+  // textContent, jamais innerHTML : ces textes viennent d'un fichier de
+  // donnees, et rien ne justifie de leur laisser injecter du balisage.
+  texte.textContent = (talent.d && talent.d.fr) || '';
+  if (texte.textContent) infobulle.append(texte);
+}
+
+/* Au-dessus de la case si la place le permet, en dessous sinon, et toujours
+   ramenee dans la fenetre — sans quoi elle sortirait du panneau de 318 px. */
+function placerInfobulle(case_) {
+  const c = case_.getBoundingClientRect();
+  const b = infobulle.getBoundingClientRect();
+  const MARGE = 8;
+
+  let y = c.top - b.height - MARGE;
+  if (y < MARGE) y = c.bottom + MARGE;
+
+  let x = c.left + (c.width - b.width) / 2;
+  x = Math.max(MARGE, Math.min(x, document.documentElement.clientWidth - b.width - MARGE));
+
+  infobulle.style.left = `${Math.round(x)}px`;
+  infobulle.style.top = `${Math.round(y)}px`;
+}
+
+function montrerInfobulle(case_) {
+  const talent = talentDeLaCase.get(case_);
+  if (!talent) return;
+
+  if (!infobulle) infobulle = creerInfobulle();
+  remplirInfobulle(talent);
+  infobulle.hidden = false;
+  placerInfobulle(case_); // Apres l'affichage : sa taille depend du texte.
+}
+
+function cacherInfobulle() {
+  if (infobulle) infobulle.hidden = true;
+}
+
+function brancherInfobulle() {
+  const surCase = (evenement) => {
+    const case_ = evenement.target.closest('.case');
+    if (case_) montrerInfobulle(case_);
+  };
+
+  cadre.addEventListener('mouseover', surCase);
+  cadre.addEventListener('focusin', surCase);
+  cadre.addEventListener('mouseout', cacherInfobulle);
+  cadre.addEventListener('focusout', cacherInfobulle);
+
+  // Le tableau bouge sous le curseur a chaque mise a jour : une infobulle
+  // laissee en place designerait alors la mauvaise case.
+  window.addEventListener('scroll', cacherInfobulle, true);
 }
 
 /* =========================================================================
@@ -346,6 +467,7 @@ chargerTable().then(() => {
     cadre.append(bascule);
   }
 
+  brancherInfobulle();
   ajuster();
 
   if (window.Twitch && window.Twitch.ext) {

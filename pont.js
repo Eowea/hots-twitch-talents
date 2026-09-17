@@ -29,6 +29,7 @@ const bl = require('./battlelobby.js');
 const mpq = require('./mpq.js');
 const tracker = require('./tracker.js');
 const live = require('./live.js');
+const vue = require('./affichage.js');
 
 /* Où le lecteur range sa configuration. Empaqueté en exécutable, il n'a plus
    de dossier de code : elle se pose alors à côté de l'exe, là où le streamer
@@ -98,7 +99,7 @@ async function premierDemarrage() {
       const config = decoder(code);
       fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
       console.log('');
-      console.log(`Appairé à la chaîne ${config.canal}.`);
+      vue.dire(`  Appairé à la chaîne ${config.canal}.`);
       console.log("C'est retenu : tu n'auras plus à le refaire.");
       console.log('');
       return config;
@@ -153,16 +154,23 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
       });
 
       if (!reponse.ok) {
-        console.error(`  envoi refusé : HTTP ${reponse.status} ${await reponse.text()}`);
+        // 401 : l'appairage ne vaut plus. Tout le reste est de notre côté.
+        if (reponse.status === 401) vue.appairageRefuse();
+        else vue.envoiRefuse(reponse.status);
+        vue.detail(`refus HTTP ${reponse.status} ${await reponse.text()}`);
         return;
       }
+
       dernierCorps = corps;
       derniere = Date.now();
-      const taille = Buffer.byteLength(corps);
-      const suffixe = rappel ? '  (rappel)' : '';
-      console.log(`  ${charge.t}s — ${charge.j.length} joueurs — ${taille} octets${suffixe}`);
+      vue.retabli();
+
+      if (charge.j.length) vue.partie(charge);
+      vue.detail(`${charge.t}s — ${charge.j.length} joueurs — `
+        + `${Buffer.byteLength(corps)} octets${rappel ? ' (rappel)' : ''}`);
     } catch (err) {
-      console.error(`  EBS injoignable : ${err.message}`);
+      vue.reseauCoupe();
+      vue.detail(`envoi impossible : ${err.message}`);
     }
   };
 
@@ -226,7 +234,7 @@ function dernierReplay() {
     process.exit(1);
   }
   trouves.sort((a, b) => b.date - a.date);
-  console.log(`Dernière partie : ${path.basename(trouves[0].chemin)}`);
+  vue.dire(`  Dernière partie : ${path.basename(trouves[0].chemin)}`);
   return trouves[0].chemin;
 }
 
@@ -235,14 +243,22 @@ function dernierReplay() {
    ========================================================================= */
 
 function suivrePartie(envoyer) {
-  console.log('En attente d\'une partie. Lance Heroes of the Storm.\n');
-  live.watchGame((vue) => {
-    if (vue === null) {
-      console.log('partie terminée');
+  vue.attente();
+
+  // On n'annonce la fin que si une partie avait commencé : sinon le lecteur
+  // dirait « partie terminée » au premier coup d'œil dans un dossier vide.
+  let enPartie = false;
+
+  live.watchGame((tableau) => {
+    if (tableau === null) {
+      if (enPartie) { vue.finPartie(); vue.attente(); enPartie = false; }
       envoyer(live.CHARGE_VIDE);
       return;
     }
-    envoyer(live.chargeUtile(vue));
+
+    const charge = live.chargeUtile(tableau);
+    if (!enPartie && charge.j.length) enPartie = true;
+    envoyer(charge);
   });
 }
 
@@ -263,7 +279,7 @@ function rejouer(envoyer, fichier, vitesse) {
   const debut = Date.now();
   let curseur = 0;
 
-  console.log(`Rejeu de « ${carte} » à ${vitesse}x\n`);
+  vue.dire(`  Rejeu de « ${carte} » à ${vitesse}x\n`);
 
   const minuterie = setInterval(() => {
     const horloge = ((Date.now() - debut) / 1000) * vitesse;
@@ -275,7 +291,10 @@ function rejouer(envoyer, fichier, vitesse) {
     envoyer(live.chargeUtile(tracker.table(partie), carte));
     if (curseur >= evenements.length) {
       clearInterval(minuterie);
-      console.log('\nrejeu terminé');
+      /* Les envois sont limités à un toutes les deux secondes : en rejeu
+         accéléré, la file n'est pas vide quand la partie s'achève. On laisse
+         passer le dernier avant d'annoncer la fin. */
+      setTimeout(() => vue.finPartie(), INTERVALLE_MIN + 200);
     }
   }, 1000);
 }
@@ -298,19 +317,19 @@ async function main() {
   if (fourni) {
     config = decoder(fourni);
     fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-    console.log(`Appairé à la chaîne ${config.canal}.`);
+    vue.dire(`  Appairé à la chaîne ${config.canal}.`);
   } else if (!config.ebs || !config.canal || !config.jeton) {
     config = await premierDemarrage();
   }
 
-  console.log(`EBS   : ${config.ebs}`);
-  console.log(`Chaîne: ${config.canal}\n`);
+  vue.demarrage(config.canal);
+  vue.detail(`service : ${config.ebs}`);
 
   const envoyer = creerEnvoyeur(config);
   const demo = args.includes('--dernier') ? dernierReplay() : valeur('--demo');
 
   if (demo) {
-    if (!fs.existsSync(demo)) { console.error(`introuvable : ${demo}`); process.exit(1); }
+    if (!fs.existsSync(demo)) { vue.dire(`  Fichier introuvable : ${demo}`); process.exit(1); }
     rejouer(envoyer, demo, Number(valeur('--vitesse') || 20));
   } else {
     suivrePartie(envoyer);

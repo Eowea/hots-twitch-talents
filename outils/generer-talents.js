@@ -91,6 +91,10 @@ async function main() {
           fr: t.name.fr,
           niveau: t.level,
           icone: raccourcir(t.icon, PREFIXE_ICONE),
+          /* La description fait l'infobulle : sans elle, « Aura vampirique »
+             n'apprend rien à un viewer qui ne connaît pas le héros. Les deux
+             langues voyagent, pour le jour où l'extension sortira de France. */
+          d: { fr: (t.description && t.description.fr) || '', en: (t.description && t.description.en) || '' },
         };
       }),
     };

@@ -374,3 +374,94 @@ body[data-mode="panneau"] {
 
 [data-mode="panneau"] .niveau-equipe { font-size: 11px; }
 [data-mode="panneau"] .attente { padding: 24px 12px; font-size: 13px; }
+
+/* =========================================================================
+   INFOBULLE
+
+   Un nom de talent seul n'apprend rien à qui ne connaît pas le héros :
+   « Aura vampirique » ne dit pas ce qu'elle fait. L'infobulle porte donc la
+   description, celle de EOWEA BUILDS.
+
+   Elle est posée sur la fenêtre, pas dans le cadre : celui-ci masque ce qui
+   dépasse, et une infobulle près du bord y serait coupée. Elle se replace donc
+   elle-même pour rester visible, y compris dans les 318 px d'un panneau.
+   ========================================================================= */
+
+.infobulle {
+  position: fixed;
+  z-index: 10;
+  width: 260px;
+  max-width: calc(100vw - 16px);
+  padding: 10px 12px;
+  background: rgba(8, 6, 24, 0.97);
+  border: 1px solid var(--or-filet);
+  border-radius: 6px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7);
+  pointer-events: none; /* Elle ne doit jamais voler le survol à l'icône. */
+  animation: infobulle-apparait 0.12s ease-out;
+}
+
+.infobulle[hidden] { display: none; }
+
+@keyframes infobulle-apparait {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.infobulle-entete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.infobulle-icone {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  clip-path: var(--hex);
+}
+
+.infobulle-nom {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--or-vif);
+  line-height: 1.25;
+}
+
+.infobulle-palier {
+  font-size: 11px;
+  color: var(--sourd);
+  letter-spacing: 0.06em;
+}
+
+.infobulle-texte {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--texte);
+}
+
+/* Un talent que le dictionnaire n'a pas su traduire : on montre au moins son
+   identifiant brut, plutôt qu'une bulle vide. */
+.infobulle-brut {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--sourd);
+  word-break: break-all;
+}
+
+/* Le survol doit se voir, sinon on ne sait pas quelle case est décrite. */
+.talents .case { transition: filter 0.12s, transform 0.12s; }
+.talents .case:hover,
+.talents .case:focus-visible {
+  filter: brightness(1.35);
+  transform: scale(1.12);
+  outline: none;
+}
+
+/* Dans 318 px, une infobulle de 260 px masque la moitié du tableau : on la
+   resserre, quitte à ce qu'elle tienne sur une ligne de plus. */
+body[data-mode="panneau"] .infobulle { width: 238px; }
+
+[data-mode="panneau"] .infobulle-texte { font-size: 12px; line-height: 1.4; }
+[data-mode="panneau"] .infobulle-nom { font-size: 13px; }
