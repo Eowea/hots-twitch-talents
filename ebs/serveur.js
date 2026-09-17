@@ -56,6 +56,11 @@ const PROPRIETAIRE = process.env.EXT_PROPRIETAIRE || CONFIG.proprietaire || '';
    du serveur reel : les deux tournent sur la meme machine. */
 const APPAIRAGES = process.env.EBS_APPAIRAGES || path.join(__dirname, 'appairages.json');
 
+/* L'adresse par laquelle les ponts joignent cet EBS. En local c'est le tunnel,
+   en production l'adresse fixe du serveur. Elle part dans le code d'appairage,
+   pour que le testeur n'ait rien d'autre à renseigner. */
+const PUBLIQUE = process.env.EBS_PUBLIQUE || CONFIG.publique || `http://localhost:${PORT}`;
+
 // Twitch livre le secret en base64 : on le décode une fois pour toutes.
 const SECRET = SECRET_B64 ? Buffer.from(SECRET_B64, 'base64') : null;
 
@@ -280,7 +285,16 @@ async function router(requete, reponse) {
       return;
     }
     const canal = String(identite.channel_id);
-    repondre(reponse, 200, { canal, jeton: jetonDAppairage(canal) });
+    const jeton = jetonDAppairage(canal);
+
+    /* Un seul code à copier plutôt que trois valeurs à recopier dans un
+       fichier : c'est la difference entre un testeur qui y arrive et un
+       testeur qui abandonne. Ce n'est pas un secret de plus — c'est le meme
+       jeton, juste emballe avec l'adresse de l'EBS. */
+    const code = Buffer.from(JSON.stringify({ e: PUBLIQUE, c: canal, j: jeton }))
+      .toString('base64url');
+
+    repondre(reponse, 200, { canal, jeton, code });
     return;
   }
 

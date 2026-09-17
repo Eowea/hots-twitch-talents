@@ -16,9 +16,8 @@
 <section>
   <h2>Ce qu'il faut faire</h2>
   <p>
-    Sur ton PC, dans le dossier du projet, crée un fichier
-    <code>pont.config.json</code> avec les deux valeurs ci-dessous, puis lance
-    <code>node pont.js</code> avant de jouer.
+    Lance le lecteur sur ton PC. Au premier démarrage, il te demandera le code
+    ci-dessous : colle-le, et c'est fini — il s'en souviendra.
   </p>
   <p class="detail">
     Le jeton n'autorise qu'une seule chose : publier le tableau des talents sur
@@ -30,16 +29,12 @@
   <h2>Tes réglages</h2>
   <div class="champs">
     <div>
+      <label for="code">Ton code d'appairage</label>
+      <span class="valeur" id="code">…</span>
+    </div>
+    <div>
       <label for="canal">Identifiant de chaîne</label>
       <span class="valeur" id="canal">…</span>
-    </div>
-    <div>
-      <label for="jeton">Jeton d'appairage</label>
-      <span class="valeur" id="jeton">…</span>
-    </div>
-    <div>
-      <label for="fichier">À coller dans pont.config.json</label>
-      <span class="valeur" id="fichier">…</span>
     </div>
   </div>
   <p id="message" class="detail">Chargement…</p>

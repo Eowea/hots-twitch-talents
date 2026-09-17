@@ -99,6 +99,16 @@ async function main() {
 
   const jetonPont = appairage.corps.jeton;
 
+  // Le code d'appairage : une seule chose a copier pour le streamer.
+  let decode = null;
+  try {
+    decode = JSON.parse(Buffer.from(appairage.corps.code || '', 'base64url').toString('utf8'));
+  } catch { /* code absent ou illisible */ }
+  verifier("le code d'appairage se décode", decode !== null, 'code absent ou illisible');
+  verifier("il porte la chaîne, le jeton et l'adresse de l'EBS",
+    Boolean(decode) && decode.c === CANAL && decode.j === jetonPont && Boolean(decode.e),
+    JSON.stringify(decode));
+
   const stable = await appeler('/appairage', {
     headers: { authorization: `Bearer ${jetonTwitch('broadcaster')}` },
   });

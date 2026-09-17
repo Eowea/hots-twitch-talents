@@ -63,11 +63,10 @@ if (!window.Twitch || !window.Twitch.ext) {
         return;
       }
 
-      const { canal, jeton } = await reponse.json();
+      const { canal, code } = await reponse.json();
+      afficher('code', code);
       afficher('canal', canal);
-      afficher('jeton', jeton);
-      afficher('fichier', JSON.stringify({ ebs: window.REGLAGES.ebs, canal, jeton }, null, 2));
-      dire('Prêt. Reporte ces valeurs sur ton PC.');
+      dire('Prêt. Colle ce code dans le lecteur, au premier démarrage.');
     } catch (err) {
       dire(`EBS injoignable (${err.message}). Deux causes possibles : le `
         + `certificat de ${window.REGLAGES.ebs} n'a pas été accepté dans ce `

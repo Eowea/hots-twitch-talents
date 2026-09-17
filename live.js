@@ -121,4 +121,47 @@ function watchGame(onUpdate, { intervalMs = 1000, onError = console.error } = {}
   return () => clearInterval(timer);
 }
 
-module.exports = { findTrackerFiles, watchGame, readBattletags, attachNames, TRACKER_NAME };
+/* =========================================================================
+   LA CHARGE UTILE
+
+   Ce que le pont envoie a l'EBS, et que l'overlay recoit. Compacte a dessein :
+   le PubSub de Twitch plafonne a 5 Ko par message, et c'est l'overlay qui
+   traduit les identifiants en noms et en icones.
+
+   Le discriminant du battletag est retire ici, a la source. « Eowea#21654 »
+   devient « Eowea ». Les neuf autres joueurs d'une partie n'ont rien demande :
+   leur identifiant unique n'a donc aucune raison de quitter cette machine,
+   encore moins d'etre diffuse a une audience. Le pseudo seul suffit largement
+   a reconnaitre quelqu'un, et n'identifie personne a lui seul.
+   ========================================================================= */
+
+const sansDiscriminant = (tag) => (tag ? String(tag).split('#')[0] : null);
+
+function chargeUtile(vue, carte) {
+  return {
+    v: 1,
+    t: vue.seconde,
+    carte: carte || null,
+    bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
+    j: vue.joueurs.map((j) => ({
+      e: j.equipe,
+      n: sansDiscriminant(j.battletag),
+      h: j.herosId,
+      l: j.niveau,
+      t: j.talents,
+    })),
+  };
+}
+
+const CHARGE_VIDE = { v: 1, t: 0, carte: null, bans: [], j: [] };
+
+module.exports = {
+  findTrackerFiles,
+  watchGame,
+  readBattletags,
+  attachNames,
+  chargeUtile,
+  sansDiscriminant,
+  CHARGE_VIDE,
+  TRACKER_NAME,
+};

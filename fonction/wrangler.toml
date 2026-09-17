@@ -1,0 +1,30 @@
+# =========================================================================
+#  Déploiement de la fonction chez Cloudflare
+#
+#  Une seule fois, pour installer l'outil et se connecter :
+#
+#    npm install -g wrangler
+#    wrangler login
+#
+#  Les trois valeurs viennent de la console développeur Twitch. Elles ne sont
+#  PAS dans ce fichier : on les dépose chiffrées chez Cloudflare, une fois.
+#
+#    wrangler secret put EXT_SECRET        # le secret, en base64, tel que Twitch le donne
+#    wrangler secret put EXT_CLIENT_ID
+#    wrangler secret put EXT_PROPRIETAIRE  # ton identifiant numérique de chaîne
+#
+#  Puis, à chaque mise à jour du code :
+#
+#    wrangler deploy
+#
+#  Wrangler affichera l'adresse publique de la fonction, du genre
+#  https://hots-talents.<ton-compte>.workers.dev — c'est elle qui va dans
+#  extension/reglages.js et dans la liste blanche des requêtes côté Twitch.
+# =========================================================================
+
+name = "hots-talents"
+main = "index.js"
+compatibility_date = "2026-09-01"
+
+# Rien d'autre : pas de base de données, pas de stockage, pas de machine.
+# Les jetons d'appairage sont dérivés du secret, donc recalculés à la demande.

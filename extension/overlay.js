@@ -147,6 +147,7 @@ function afficher(etat) {
   cadre.classList.toggle('partie', Boolean(etat && etat.j && etat.j.length));
   if (!etat || !etat.j || !etat.j.length) return;
 
+
   $('#carte').textContent = etat.carte || '';
   const s = Math.max(0, Math.round(etat.t || 0));
   $('#chrono').textContent = `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`;
@@ -241,15 +242,16 @@ function recevoir(etat) {
 
 let sourceChoisie = null;
 
-function brancherTwitch(auth) {
+/* Le PubSub ne rejoue pas ce qui est déjà passé. Plutôt que de faire garder un
+   historique au serveur, c'est le lecteur du streamer qui republie son état
+   toutes les dix secondes : un viewer qui ouvre le tableau entre deux prises
+   de talents attend ce délai au pire, et le service reste sans mémoire. */
+function brancherTwitch() {
   // onAuthorized se déclenche aussi au renouvellement du jeton : on ne
-  // s'abonne qu'une fois, mais on refait l'appel d'état à chaque fois, sans
-  // dommage.
-  if (sourceChoisie !== 'twitch') {
-    sourceChoisie = 'twitch';
-    brancherEcoutes();
-  }
-  demanderEtatCourant(auth);
+  // s'abonne qu'une fois.
+  if (sourceChoisie === 'twitch') return;
+  sourceChoisie = 'twitch';
+  brancherEcoutes();
 }
 
 function brancherEcoutes() {
@@ -266,23 +268,6 @@ function brancherEcoutes() {
       console.warn('message illisible', err);
     }
   });
-}
-
-/* Le PubSub ne rejoue pas ce qui est déjà passé : sans cet appel, un viewer
-   qui ouvre le tableau en pleine partie attendrait le prochain message. On
-   demande l'état tel qu'il était il y a le retard de son flux, pour ne rien
-   lui divulguer que son image ne montre pas encore. */
-async function demanderEtatCourant(auth) {
-  try {
-    const url = `${window.REGLAGES.ebs}/etat?retard=${Math.round(retardSecondes)}`;
-    const reponse = await fetch(url, {
-      headers: { authorization: `Bearer ${auth.token}` },
-      cache: 'no-store',
-    });
-    if (reponse.ok) afficher(await reponse.json());
-  } catch {
-    // EBS injoignable : le prochain message PubSub fera l'affaire.
-  }
 }
 
 /* Le script d'aide de Twitch définit window.Twitch même hors du lecteur, et en
@@ -354,7 +339,7 @@ chargerTable().then(() => {
   ajuster();
 
   if (window.Twitch && window.Twitch.ext) {
-    window.Twitch.ext.onAuthorized((auth) => brancherTwitch(auth));
+    window.Twitch.ext.onAuthorized(() => brancherTwitch());
   }
 
   /* Si onAuthorized ne s'est pas déclenché, c'est qu'on n'est pas dans le

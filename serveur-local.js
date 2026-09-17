@@ -38,29 +38,6 @@ const CERTS = path.join(__dirname, 'certs');
    reste reglable par --port. */
 const PORT_DEFAUT = 8443;
 
-/* =========================================================================
-   LA CHARGE UTILE
-   Compacte à dessein : le PubSub de Twitch plafonne à 5 Ko par message, et
-   c'est l'overlay qui traduit les identifiants.
-   ========================================================================= */
-
-function chargeUtile(vue, carte) {
-  return {
-    v: 1,
-    t: vue.seconde,
-    carte: carte || null,
-    bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
-    j: vue.joueurs.map((j) => ({
-      e: j.equipe,
-      n: j.battletag || null,
-      h: j.herosId,
-      l: j.niveau,
-      t: j.talents,
-    })),
-  };
-}
-
-const VIDE = { v: 1, t: 0, carte: null, bans: [], j: [] };
 
 /* =========================================================================
    SOURCE : LA PARTIE EN COURS
@@ -68,7 +45,7 @@ const VIDE = { v: 1, t: 0, carte: null, bans: [], j: [] };
 
 function suivrePartieReelle(etat) {
   live.watchGame((vue) => {
-    etat.courant = vue === null ? VIDE : chargeUtile(vue);
+    etat.courant = vue === null ? live.CHARGE_VIDE : live.chargeUtile(vue);
     if (vue === null) console.log('partie terminée');
     else console.log(`  ${vue.seconde}s — ${vue.joueurs.length} joueurs`);
   });
@@ -109,7 +86,7 @@ function rejouer(etat, fichier, vitesse) {
       curseur++;
     }
     live.attachNames(partie, battletags);
-    etat.courant = chargeUtile(tracker.table(partie), carte);
+    etat.courant = live.chargeUtile(tracker.table(partie), carte);
 
     if (curseur >= evenements.length) {
       clearInterval(minuterie);
@@ -220,7 +197,7 @@ function main() {
     return i !== -1 ? args[i + 1] : null;
   };
 
-  const etat = { courant: VIDE };
+  const etat = { courant: live.CHARGE_VIDE };
   const port = Number(valeur('--port') || PORT_DEFAUT);
   const demo = valeur('--demo');
   const vitesse = Number(valeur('--vitesse') || 10);

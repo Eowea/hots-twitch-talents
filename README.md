@@ -63,6 +63,12 @@ l'écriture : avant le draft, et avant le tirage ARAM. Les chaînes `HeroLcns`,
 lui-même. Aucune injection, aucune lecture mémoire, donc aucun risque côté
 Blizzard.
 
+**Le discriminant du battletag ne quitte jamais la machine du streamer.**
+« Eowea#21654 » devient « Eowea » dans `live.js`, avant tout envoi : ni l'EBS,
+ni Twitch, ni les viewers ne le voient. Les neuf autres joueurs d'une partie
+n'ont rien demandé — leur identifiant unique n'a aucune raison d'être diffusé à
+une audience, quand le pseudo seul suffit à reconnaître quelqu'un.
+
 ## Utilisation
 
 Aucune dépendance, aucun `npm install`. Node 18+ suffit.
@@ -109,15 +115,19 @@ node cli.js once --file "chemin/vers/partie.StormReplay"
 ```
 PC du streamer                      Twitch                    Viewer
 ──────────────                      ──────                    ──────
-tracker.events  ->  lecteur  ->  EBS  ->  PubSub  ->  overlay vidéo
-   (le jeu)         (Node)      (HTTPS)               (sur le lecteur)
+tracker.events  ->  lecteur  ->  fonction  ->  PubSub  ->  overlay / panneau
+   (le jeu)         (son PC)    (Cloudflare)              (chez le viewer)
+                    son jeton   le secret
 ```
 
 Quatre points déjà tranchés :
 
-- **Extension de type video overlay**, pas panel. Le tableau se déploie sur le
-  lecteur au clic, et non sous le stream. On garde ainsi la main sur la taille
-  et sur l'ouverture, là où une extension « component » impose son cadre.
+- **Deux surfaces, un seul code.** La superposition vidéo
+  (`video_overlay.html`) se déploie au clic par-dessus le lecteur ; le panneau
+  (`panneau.html`) s'affiche en permanence sous le stream, **y compris hors
+  direct**, ce qui en fait le seul des deux qu'on puisse essayer sans diffuser.
+  Les deux partagent `overlay.js` et `overlay.css` ; seul le gabarit change,
+  via `<body data-mode="panneau">`.
 - **Disposition côte à côte** : les deux équipes en deux colonnes, une par
   moitié de largeur. Le panneau ne prend que la moitié de la hauteur de
   l'image, au prix d'icônes plus petites. Maquette :
@@ -143,7 +153,7 @@ Quatre points déjà tranchés :
 | `bzip2.js` | décompression bzip2 en JS pur (Node n'en a pas) |
 | `heroes.js` | dictionnaire de noms de héros |
 | `serveur-local.js` | sert l'overlay et la charge utile, en direct ou en rejeu |
-| `extension/` | l'extension Twitch : overlay, habillage, table des talents |
+| `extension/` | l'extension Twitch : overlay, panneau, habillage, table des talents |
 | `outils/generer-talents.js` | reconstruit `extension/talents.json` depuis BUILDS |
 | `ebs/serveur.js` | l'EBS : appairage, diffusion PubSub, état courant, statut |
 | `ebs/jwt.js` | signature et vérification HS256, avec le seul module crypto |
@@ -220,12 +230,48 @@ après une mise à jour du site :
 node outils/generer-talents.js
 ```
 
-## L'EBS
+## La fonction
 
-Le service qui relie ton PC aux viewers. Trois rôles, et trois seulement :
-recevoir l'état depuis ton PC, le diffuser par le PubSub de Twitch, et le
-servir à ceux qui ouvrent le tableau en cours de partie — car le PubSub ne
-rejoue pas ce qui est déjà passé.
+Le service qui relie les PC des streamers aux viewers. Deux points d'entrée,
+et **aucun stockage** :
+
+| Entrée | Qui appelle | Ce qui se passe |
+|---|---|---|
+| `GET /appairage` | la page de configuration | le diffuseur, authentifié par Twitch, obtient son code |
+| `POST /publier` | le lecteur d'un streamer | on vérifie son jeton, on signe, on diffuse |
+
+**Le secret de l'extension ne vit que là.** Un PC de streamer ne connaît que
+son propre jeton, qui ne vaut que pour sa chaîne. C'est la raison d'être de ce
+service : distribuer le secret dans un exécutable le rendrait extractible, et
+n'importe qui pourrait alors diffuser sur la chaîne de n'importe qui.
+
+**Les jetons d'appairage sont dérivés, pas stockés** :
+
+```
+jeton = HMAC(secret, "appairage:" + identifiant_de_chaîne)
+```
+
+Recalculé à chaque appel des deux côtés. La fonction n'a donc ni fichier, ni
+base de données : elle peut démarrer, mourir et renaître ailleurs sans rien
+perdre. Contrepartie assumée : on ne révoque pas un jeton isolément sans
+changer le secret — cas rare, qui ne doit pas imposer une base de données au
+cas courant.
+
+Elle est écrite en interfaces web (Request, Response, WebCrypto), présentes
+aussi bien chez Cloudflare que dans Node. Une seule implémentation, éprouvée
+localement, déployée telle quelle.
+
+```bash
+node fonction/test.js          # 16 contrôles, sans Cloudflare ni Twitch
+node fonction/local.js         # la même fonction, avec tes vraies identités
+cd fonction && wrangler deploy # en production
+```
+
+L'appel réel à l'API de Twitch a été vérifié depuis le lanceur local : la
+signature WebCrypto est acceptée, la diffusion passe.
+
+`ebs/` est l'ancienne version, un service Node à garder allumé. Elle est
+remplacée par `fonction/` et peut être supprimée.
 
 ```bash
 EXT_CLIENT_ID=... EXT_SECRET=... EXT_PROPRIETAIRE=... node ebs/serveur.js
@@ -248,7 +294,8 @@ Sans ça, un viewer verrait des talents que son image ne montre pas encore.
 
 `ebs/test.js` déroule le parcours complet avec des jetons forgés : appairage
 refusé à un viewer, publication refusée sans le bon jeton, état retardé,
-signature falsifiée rejetée. Quatorze contrôles, tous au vert.
+signature falsifiée rejetée, code d'appairage vérifié. Seize contrôles,
+tous au vert.
 
 ## Reprendre après une pause
 

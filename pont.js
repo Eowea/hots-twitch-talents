@@ -5,24 +5,24 @@
    Tourne sur ton PC pendant que tu joues : il suit la partie, en fait la
    charge utile, et la pousse à l'EBS, qui la diffuse aux viewers.
 
-   Configuration, par variables d'environnement ou par pont.config.json (le
-   fichier est ignoré par git) :
+   Au premier démarrage, il demande le code d'appairage que la configuration
+   de l'extension affiche sur ta chaîne, puis le retient dans pont.config.json.
+   Il n'y a rien d'autre à régler.
 
-     EBS_URL      adresse de l'EBS, par exemple https://localhost:8081
-     CANAL        ton identifiant de chaîne Twitch
-     JETON        le jeton d'appairage, donné par la page de configuration
+   Ce code n'autorise qu'une chose : publier le tableau des talents sur ta
+   chaîne. Il ne donne aucun accès à ton compte Twitch, et tu peux le révoquer
+   en le régénérant depuis la même page.
 
-   Le jeton n'autorise qu'une chose : publier sur ta chaîne. Il ne donne aucun
-   accès à ton compte Twitch, et tu peux le révoquer en le régénérant.
-
-     node pont.js
-     node pont.js --demo "<replay.StormReplay>" --vitesse 20
-     node pont.js --dernier --vitesse 20      rejoue la derniere partie jouee
+     node pont.js                             suit la partie en cours
+     node pont.js --dernier --vitesse 20      rejoue la dernière partie jouée
+     node pont.js --demo "<replay>" --vitesse 20
+     node pont.js --code <code>               appairage sans question posée
    ========================================================================= */
 'use strict';
 
 const fs = require('fs');
 const os = require('os');
+const readline = require('readline');
 const path = require('path');
 
 const bl = require('./battlelobby.js');
@@ -35,6 +35,69 @@ const CONFIG = path.join(__dirname, 'pont.config.json');
 // Twitch tolère 100 messages par minute et par chaîne. Une partie n'en produit
 // pas le dixième, mais cet intervalle garantit qu'on n'en approchera jamais.
 const INTERVALLE_MIN = 2000;
+
+/* La fonction ne garde aucun historique : un viewer qui ouvre le tableau entre
+   deux prises de talents n'aurait donc rien à afficher. On republie le même
+   état toutes les dix secondes pour qu'il n'attende jamais plus longtemps.
+   Six messages par minute au pire : très loin du plafond de Twitch. */
+const RAPPEL = 10000;
+
+/* =========================================================================
+   APPAIRAGE
+
+   Le code vient de la page de configuration de l'extension. Il emballe
+   l'adresse de l'EBS, l'identifiant de chaîne et le jeton — pour que le
+   streamer n'ait qu'une seule chose à copier, une seule fois.
+   ========================================================================= */
+
+function decoder(code) {
+  let contenu;
+  try {
+    contenu = JSON.parse(Buffer.from(String(code).trim(), 'base64url').toString('utf8'));
+  } catch {
+    // L'erreur d'analyse brute n'apprendrait rien à qui a simplement mal copié.
+    throw new Error('il semble tronqué ou mal copié');
+  }
+  const { e, c, j } = contenu;
+  if (!e || !c || !j) throw new Error('il lui manque une partie');
+  return { ebs: e, canal: String(c), jeton: j };
+}
+
+function demanderCode() {
+  const lecture = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resoudre) => {
+    console.log('');
+    console.log('Premier démarrage.');
+    console.log('');
+    console.log("Ouvre la configuration de l'extension Talents sur ta chaîne Twitch,");
+    console.log("et copie le code d'appairage qu'elle affiche.");
+    console.log('');
+    lecture.question('Colle-le ici : ', (reponse) => {
+      lecture.close();
+      resoudre(reponse);
+    });
+  });
+}
+
+async function premierDemarrage() {
+  for (let essai = 0; essai < 3; essai++) {
+    const code = await demanderCode();
+    try {
+      const config = decoder(code);
+      fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+      console.log('');
+      console.log(`Appairé à la chaîne ${config.canal}.`);
+      console.log("C'est retenu : tu n'auras plus à le refaire.");
+      console.log('');
+      return config;
+    } catch (err) {
+      console.log('');
+      console.log(`Ce code n'est pas valide (${err.message}). Réessaie.`);
+    }
+  }
+  console.error('Trois essais infructueux. Vérifie le code sur la page de configuration.');
+  return process.exit(1);
+}
 
 function reglages() {
   let fichier = {};
@@ -50,27 +113,6 @@ function reglages() {
   };
 }
 
-/* =========================================================================
-   LA CHARGE UTILE
-   Identiques à celle de serveur-local.js : l'overlay ne doit voir aucune
-   différence entre le test local et le direct.
-   ========================================================================= */
-
-function chargeUtile(vue, carte) {
-  return {
-    v: 1,
-    t: vue.seconde,
-    carte: carte || null,
-    bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
-    j: vue.joueurs.map((j) => ({
-      e: j.equipe,
-      n: j.battletag || null,
-      h: j.herosId,
-      l: j.niveau,
-      t: j.talents,
-    })),
-  };
-}
 
 /* =========================================================================
    ENVOI
@@ -82,9 +124,10 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
   let enAttente = null;
   let minuterie = null;
 
-  const pousser = async (charge) => {
+  const pousser = async (charge, rappel = false) => {
     const corps = JSON.stringify(charge);
-    if (corps === dernierCorps) return; // Rien n'a bougé : on n'envoie pas.
+    // Rien n'a bougé : on n'envoie que s'il est temps de rappeler l'état.
+    if (corps === dernierCorps && !rappel) return;
 
     try {
       const reponse = await fetch(`${ebs}/publier`, {
@@ -104,11 +147,20 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
       dernierCorps = corps;
       derniere = Date.now();
       const taille = Buffer.byteLength(corps);
-      console.log(`  ${charge.t}s — ${charge.j.length} joueurs — ${taille} octets`);
+      const suffixe = rappel ? '  (rappel)' : '';
+      console.log(`  ${charge.t}s — ${charge.j.length} joueurs — ${taille} octets${suffixe}`);
     } catch (err) {
       console.error(`  EBS injoignable : ${err.message}`);
     }
   };
+
+  /* Le rappel périodique : il ne part que si rien d'autre n'est parti
+     entre-temps, donc il ne s'ajoute jamais au trafic d'une partie animée. */
+  setInterval(() => {
+    if (!enAttente && dernierCorps && Date.now() - derniere >= RAPPEL) {
+      pousser(JSON.parse(dernierCorps), true);
+    }
+  }, RAPPEL).unref();
 
   /* On ne pousse jamais plus d'un message toutes les deux secondes ; le
      dernier état reçu entre-temps part à l'échéance. */
@@ -169,10 +221,10 @@ function suivrePartie(envoyer) {
   live.watchGame((vue) => {
     if (vue === null) {
       console.log('partie terminée');
-      envoyer({ v: 1, t: 0, carte: null, bans: [], j: [] });
+      envoyer(live.CHARGE_VIDE);
       return;
     }
-    envoyer(chargeUtile(vue));
+    envoyer(live.chargeUtile(vue));
   });
 }
 
@@ -202,7 +254,7 @@ function rejouer(envoyer, fichier, vitesse) {
       curseur++;
     }
     live.attachNames(partie, battletags);
-    envoyer(chargeUtile(tracker.table(partie), carte));
+    envoyer(live.chargeUtile(tracker.table(partie), carte));
     if (curseur >= evenements.length) {
       clearInterval(minuterie);
       console.log('\nrejeu terminé');
@@ -214,23 +266,23 @@ function rejouer(envoyer, fichier, vitesse) {
    DEMARRAGE
    ========================================================================= */
 
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   const valeur = (nom) => {
     const i = args.indexOf(nom);
     return i !== -1 ? args[i + 1] : null;
   };
 
-  const config = reglages();
-  const manques = [!config.ebs && 'EBS_URL', !config.canal && 'CANAL', !config.jeton && 'JETON']
-    .filter(Boolean);
+  let config = reglages();
 
-  if (manques.length) {
-    console.error(`Réglages manquants : ${manques.join(', ')}`);
-    console.error(`Renseigne-les dans l'environnement, ou dans ${CONFIG} :`);
-    console.error('  { "ebs": "https://...", "canal": "123456", "jeton": "..." }');
-    console.error('\nLe jeton vient de la page de configuration de ton extension.');
-    process.exit(1);
+  // --code sert aux installations automatisées ; sans lui, on demande.
+  const fourni = valeur('--code');
+  if (fourni) {
+    config = decoder(fourni);
+    fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
+    console.log(`Appairé à la chaîne ${config.canal}.`);
+  } else if (!config.ebs || !config.canal || !config.jeton) {
+    config = await premierDemarrage();
   }
 
   console.log(`EBS   : ${config.ebs}`);
@@ -247,4 +299,7 @@ function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error(err.message);
+  process.exit(1);
+});
