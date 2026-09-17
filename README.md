@@ -155,6 +155,9 @@ Quatre points déjà tranchés :
 | `serveur-local.js` | sert l'overlay et la charge utile, en direct ou en rejeu |
 | `extension/` | l'extension Twitch : overlay, panneau, habillage, table des talents |
 | `outils/generer-talents.js` | reconstruit `extension/talents.json` depuis BUILDS |
+| `outils/construire.js` | fabrique `build/lecteur.exe`, de bout en bout |
+| `outils/empaqueter.js` | replie les modules du lecteur en un script unique |
+| `fonction/` | le service sans état : appairage et diffusion |
 | `ebs/serveur.js` | l'EBS : appairage, diffusion PubSub, état courant, statut |
 | `ebs/jwt.js` | signature et vérification HS256, avec le seul module crypto |
 | `ebs/test.js` | le parcours complet de l'EBS, sans Twitch |
@@ -329,6 +332,42 @@ se charge correctement produit deux lignes :
 Aucune ligne signifie que la page ne s'exécute pas — le plus souvent un chemin
 de fichier erroné dans la console Twitch, qui renvoie une page 404 invisible
 dans une iframe.
+
+## L'exécutable
+
+Le streamer ne doit rien installer. Un fichier, qu'il double-clique.
+
+```bash
+node outils/construire.js
+```
+
+Quatre étapes automatisées : replier les sept modules du lecteur en un script
+unique, en faire un blob, copier le binaire de Node, y injecter le blob. Le
+résultat est `build/lecteur.exe`, **88 Mo, à distribuer tel quel**.
+
+`outils/empaqueter.js` est un assembleur de quarante lignes, écrit ici plutôt
+qu'emprunté : le projet n'a aucune dépendance, et ce n'était pas la peine d'en
+introduire une pour résoudre des `require` relatifs. Seule l'injection finale
+utilise un outil extérieur, récupéré à la volée par npx — un outil d'atelier,
+qui ne part pas dans le produit.
+
+Ce que vit le streamer :
+
+1. il installe l'extension sur sa chaîne ;
+2. il ouvre la configuration, un code s'affiche ;
+3. il lance `lecteur.exe`, colle le code. Une fois.
+4. il joue.
+
+La configuration se range **à côté de l'exécutable**, pas dans un dossier
+caché : il peut la voir, la sauvegarder, ou la supprimer pour se réappairer.
+
+Deux choses à savoir avant de distribuer :
+
+- **Windows affichera un avertissement au premier lancement.** L'exécutable
+  n'est pas signé — c'est le lot de tout logiciel distribué sans certificat,
+  qui coûte quelques centaines d'euros par an.
+- **Les 88 Mo sont le binaire de Node**, pas notre code : le lecteur lui-même
+  fait 58 Ko. C'est le prix d'un exécutable autonome.
 
 ## Prochaine étape
 

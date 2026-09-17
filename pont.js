@@ -30,7 +30,19 @@ const mpq = require('./mpq.js');
 const tracker = require('./tracker.js');
 const live = require('./live.js');
 
-const CONFIG = path.join(__dirname, 'pont.config.json');
+/* Où le lecteur range sa configuration. Empaqueté en exécutable, il n'a plus
+   de dossier de code : elle se pose alors à côté de l'exe, là où le streamer
+   peut la voir, la sauvegarder ou la supprimer pour se réappairer. */
+const DOSSIER = (() => {
+  try {
+    // eslint-disable-next-line global-require
+    return require('node:sea').isSea() ? path.dirname(process.execPath) : __dirname;
+  } catch {
+    return __dirname; // Node trop ancien pour node:sea : on est forcément en source.
+  }
+})();
+
+const CONFIG = path.join(DOSSIER, 'pont.config.json');
 
 // Twitch tolère 100 messages par minute et par chaîne. Une partie n'en produit
 // pas le dixième, mais cet intervalle garantit qu'on n'en approchera jamais.
