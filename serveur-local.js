@@ -7,6 +7,7 @@
                                             rejoue une vraie partie, accélérée
      node serveur-local.js --demo ... --vitesse 20
      node serveur-local.js --http           sans TLS, pour un simple coup d'œil
+     node serveur-local.js --port 9443      si 8443 est pris lui aussi
 
    Il sert le dossier extension/ et expose /etat, qui rend exactement la charge
    utile que l'EBS enverra plus tard par PubSub. L'overlay ne verra donc aucune
@@ -31,7 +32,11 @@ const live = require('./live.js');
 
 const RACINE = path.join(__dirname, 'extension');
 const CERTS = path.join(__dirname, 'certs');
-const PORT = 8080;
+
+/* 8080 et 8081 sont souvent occupes par d'autres outils d'un PC de stream
+   (NVIDIA Broadcast, Streamer.bot...). On part donc plus haut, et le port
+   reste reglable par --port. */
+const PORT_DEFAUT = 8443;
 
 /* =========================================================================
    LA CHARGE UTILE
@@ -199,6 +204,7 @@ function main() {
   };
 
   const etat = { courant: VIDE };
+  const port = Number(valeur('--port') || PORT_DEFAUT);
   const demo = valeur('--demo');
   const vitesse = Number(valeur('--vitesse') || 10);
 
@@ -216,8 +222,15 @@ function main() {
   const serveur = tls ? https.createServer(tls, servir(etat)) : http.createServer(servir(etat));
   const schema = tls ? 'https' : 'http';
 
-  serveur.listen(PORT, () => {
-    console.log(`\n  ${schema}://localhost:${PORT}/`);
+  serveur.on('error', (err) => {
+    if (err.code !== 'EADDRINUSE') throw err;
+    console.error(`\nLe port ${port} est déjà pris par un autre programme.`);
+    console.error('Relance avec un autre port :  node serveur-local.js --port 9443');
+    process.exit(1);
+  });
+
+  serveur.listen(port, () => {
+    console.log(`\n  ${schema}://localhost:${port}/`);
     if (!tls) console.log('  (sans TLS : Twitch exigera du HTTPS pour le test local)');
     console.log('\nCtrl+C pour arrêter.\n');
   });

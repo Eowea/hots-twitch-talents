@@ -23,6 +23,12 @@ const tracker = require('./tracker.js');
 
 const TRACKER_NAME = 'replay.tracker.events';
 
+/* Windows ne vide pas toujours le dossier temporaire en fin de partie : le
+   fichier de la partie précédente peut y traîner des heures. Pendant une
+   partie, il est réécrit toutes les quinze secondes environ — au-delà de ce
+   délai sans écriture, on considère qu'il n'y a pas de partie en cours. */
+const FRAICHEUR_MAX = 5 * 60 * 1000;
+
 /* Même dossier que le battlelobby, même logique de recherche : le suffixe du
    dossier varie d'une instance du jeu à l'autre. */
 function findTrackerFiles() {
@@ -83,7 +89,9 @@ function watchGame(onUpdate, { intervalMs = 1000, onError = console.error } = {}
   });
 
   const tick = async () => {
-    const [file] = findTrackerFiles();
+    const [recent] = findTrackerFiles();
+    // Un fichier qui ne bouge plus est le reliquat d'une partie terminée.
+    const file = recent && Date.now() - recent.mtimeMs < FRAICHEUR_MAX ? recent : null;
 
     if (!file) {
       // Dossier effacé : la partie est finie, on oublie tout.

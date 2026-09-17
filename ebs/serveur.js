@@ -15,7 +15,7 @@
      EXT_CLIENT_ID    identifiant client de l'extension (console Twitch)
      EXT_SECRET       secret de l'extension, en base64, tel que Twitch le donne
      EXT_PROPRIETAIRE identifiant utilisateur Twitch du propriétaire
-     EBS_PORT         8081 par défaut
+     EBS_PORT         8444 par défaut
 
    Le fichier évite de taper le secret dans le terminal, où il resterait dans
    l'historique :
@@ -47,7 +47,8 @@ function fichierConfig() {
 }
 
 const CONFIG = fichierConfig();
-const PORT = Number(process.env.EBS_PORT || CONFIG.port || 8081);
+// 8081 est souvent pris sur un PC de stream : on part plus haut.
+const PORT = Number(process.env.EBS_PORT || CONFIG.port || 8444);
 const CLIENT_ID = process.env.EXT_CLIENT_ID || CONFIG.clientId || '';
 const SECRET_B64 = process.env.EXT_SECRET || CONFIG.secret || '';
 const PROPRIETAIRE = process.env.EXT_PROPRIETAIRE || CONFIG.proprietaire || '';
@@ -330,6 +331,16 @@ function main() {
   };
 
   const serveur = tls ? https.createServer(tls, gestionnaire) : http.createServer(gestionnaire);
+
+  serveur.on('error', (err) => {
+    if (err.code !== 'EADDRINUSE') throw err;
+    console.error(`
+Le port ${PORT} est déjà pris par un autre programme.`);
+    console.error('Choisis-en un autre dans ebs/config.json :  { "port": 9444, ... }');
+    console.error('et reporte-le dans extension/reglages.js.');
+    process.exit(1);
+  });
+
   serveur.listen(PORT, () => {
     console.log(`EBS sur ${tls ? 'https' : 'http'}://localhost:${PORT}`);
     if (!tls) {

@@ -4,35 +4,75 @@
    Twitch authentifie le diffuseur pour nous : onAuthorized fournit un jeton
    signé avec le secret de l'extension, que l'EBS vérifie. Personne d'autre ne
    peut donc obtenir le jeton d'appairage d'une chaîne qui n'est pas la sienne.
+
+   La page annonce chaque étape. Sans ça, une autorisation qui n'arrive jamais
+   laisse trois « … » à l'écran et rien pour comprendre pourquoi — c'est
+   exactement ce qui s'est produit la première fois.
    ========================================================================= */
 'use strict';
 
-const afficher = (id, texte) => { document.getElementById(id).textContent = texte; };
+const DELAI_TWITCH = 6000; // Au-delà, onAuthorized ne viendra plus.
 
-function erreur(texte) {
-  const message = document.getElementById('message');
+const message = document.getElementById('message');
+let autorise = false;
+
+function afficher(id, texte) {
+  document.getElementById(id).textContent = texte;
+}
+
+function dire(texte, enErreur = false) {
   message.textContent = texte;
-  message.className = 'erreur';
+  message.className = enErreur ? 'erreur' : 'detail';
   message.hidden = false;
 }
 
-window.Twitch.ext.onAuthorized(async (auth) => {
-  try {
-    const reponse = await fetch(`${window.REGLAGES.ebs}/appairage`, {
-      headers: { authorization: `Bearer ${auth.token}` },
-    });
+dire('Connexion à Twitch…');
 
-    if (!reponse.ok) {
-      erreur(`L'EBS a répondu ${reponse.status}. Vérifie qu'il tourne et que `
-        + `son adresse (${window.REGLAGES.ebs}) est la bonne dans reglages.js.`);
-      return;
+/* Si le script d'aide de Twitch n'est même pas là, la page n'est pas chargée
+   dans le gestionnaire d'extensions — ou son domaine est bloqué. */
+if (!window.Twitch || !window.Twitch.ext) {
+  dire('Le script d\'aide de Twitch ne s\'est pas chargé. Cette page doit être '
+    + 'ouverte depuis le gestionnaire d\'extensions, pas directement.', true);
+} else {
+  setTimeout(() => {
+    if (autorise) return;
+    dire('Twitch n\'a pas autorisé la page au bout de 6 secondes. C\'est en '
+      + 'général le certificat de localhost qui n\'a pas été accepté dans ce '
+      + 'navigateur, ou l\'extension qui n\'est pas installée sur la chaîne. '
+      + 'Ouvre la console (F12) : le vrai motif y est écrit.', true);
+  }, DELAI_TWITCH);
+
+  window.Twitch.ext.onAuthorized(async (auth) => {
+    autorise = true;
+    dire(`Autorisé par Twitch. Interrogation de l'EBS sur ${window.REGLAGES.ebs}…`);
+
+    try {
+      const reponse = await fetch(`${window.REGLAGES.ebs}/appairage`, {
+        headers: { authorization: `Bearer ${auth.token}` },
+      });
+
+      if (reponse.status === 403) {
+        dire('L\'EBS a répondu 403. Il n\'a pas reconnu le jeton de Twitch : '
+          + 'le secret de ebs/config.json ne correspond pas à celui de la '
+          + 'console Twitch. Si tu as régénéré une clé, l\'ancienne ne vaut plus.', true);
+        return;
+      }
+
+      if (!reponse.ok) {
+        dire(`L'EBS a répondu ${reponse.status}.`, true);
+        return;
+      }
+
+      const { canal, jeton } = await reponse.json();
+      afficher('canal', canal);
+      afficher('jeton', jeton);
+      afficher('fichier', JSON.stringify({ ebs: window.REGLAGES.ebs, canal, jeton }, null, 2));
+      dire('Prêt. Reporte ces valeurs sur ton PC.');
+    } catch (err) {
+      dire(`EBS injoignable (${err.message}). Deux causes possibles : le `
+        + `certificat de ${window.REGLAGES.ebs} n'a pas été accepté dans ce `
+        + 'navigateur, ou la liste blanche des requêtes de la console Twitch ne '
+        + 'contient pas localhost.', true);
     }
-
-    const { canal, jeton } = await reponse.json();
-    afficher('canal', canal);
-    afficher('jeton', jeton);
-    afficher('fichier', JSON.stringify({ ebs: window.REGLAGES.ebs, canal, jeton }, null, 2));
-  } catch (err) {
-    erreur(`EBS injoignable : ${err.message}`);
-  }
-});
+  });
+}
