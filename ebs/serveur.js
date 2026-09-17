@@ -166,9 +166,12 @@ function repondre(reponse, code, corps) {
       ? 'text/plain; charset=utf-8'
       : 'application/json; charset=utf-8',
     'cache-control': 'no-store',
-    // L'extension est servie depuis le domaine de Twitch, pas depuis ici.
+    // L'extension est servie depuis le domaine de Twitch, pas depuis ici ; et
+    // Chrome exige qu'un serveur local autorise explicitement les appels
+    // venant d'une page publique.
     'access-control-allow-origin': '*',
-    'access-control-allow-headers': 'authorization, content-type',
+    'access-control-allow-headers': '*',
+    'access-control-allow-private-network': 'true',
   });
   reponse.end(texte);
 }
@@ -205,6 +208,7 @@ function identiteTwitch(requete) {
 async function router(requete, reponse) {
   const url = new URL(requete.url, 'https://ebs');
 
+  // Contrôle préalable de Chrome avant tout appel vers le réseau privé.
   if (requete.method === 'OPTIONS') { repondre(reponse, 204, ''); return; }
 
   /* --- Ton PC pousse l'état de la partie ------------------------------- */

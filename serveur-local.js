@@ -160,18 +160,33 @@ const TYPES = {
   '.svg': 'image/svg+xml',
 };
 
+/* Accès au réseau privé : depuis Chrome 130 environ, une page publique
+   (dashboard.twitch.tv) qui charge une ressource sur localhost est bloquée si
+   le serveur local ne l'autorise pas explicitement. Chrome envoie d'abord une
+   requête OPTIONS de contrôle ; sans ces en-têtes, l'iframe reste noire et
+   aucune erreur n'apparaît dans l'onglet Réseau. */
+const ENTETES_RESEAU_PRIVE = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': '*',
+  'access-control-allow-private-network': 'true',
+};
+
 function servir(etat) {
   return (requete, reponse) => {
     const url = new URL(requete.url, 'https://localhost');
+
+    if (requete.method === 'OPTIONS') {
+      reponse.writeHead(204, { ...ENTETES_RESEAU_PRIVE, 'access-control-max-age': '86400' });
+      reponse.end();
+      return;
+    }
 
     if (url.pathname === '/etat') {
       const corps = JSON.stringify(etat.courant);
       reponse.writeHead(200, {
         'content-type': 'application/json; charset=utf-8',
         'cache-control': 'no-store',
-        // L'overlay est servi d'ici, mais Twitch le chargera depuis son
-        // propre domaine pendant les essais.
-        'access-control-allow-origin': '*',
+        ...ENTETES_RESEAU_PRIVE,
       });
       reponse.end(corps);
       return;
@@ -186,6 +201,7 @@ function servir(etat) {
       reponse.writeHead(200, {
         'content-type': TYPES[path.extname(fichier)] || 'application/octet-stream',
         'cache-control': 'no-store',
+        ...ENTETES_RESEAU_PRIVE,
       });
       reponse.end(contenu);
     });
