@@ -68,10 +68,12 @@ if (!window.Twitch || !window.Twitch.ext) {
       afficher('canal', canal);
       dire('Prêt. Colle ce code dans le lecteur, au premier démarrage.');
     } catch (err) {
-      dire(`EBS injoignable (${err.message}). Deux causes possibles : le `
-        + `certificat de ${window.REGLAGES.ebs} n'a pas été accepté dans ce `
-        + 'navigateur, ou la liste blanche des requêtes de la console Twitch ne '
-        + 'contient pas localhost.', true);
+      const domaine = new URL(window.REGLAGES.ebs).hostname;
+      dire(`Service injoignable à ${window.REGLAGES.ebs} (${err.message}). `
+        + `Vérifie que « ${domaine} » figure dans la liste blanche des requêtes `
+        + 'de la console Twitch. Si tu viens de changer cette adresse, recharge '
+        + "cette page avec Ctrl+Shift+R : le navigateur garde l'ancienne en cache.",
+      true);
     }
   });
 }
