@@ -56,7 +56,8 @@ const chargeExemple = (t) => ({
 });
 
 async function main() {
-  const serveur = spawn(process.execPath, [path.join(__dirname, 'serveur.js')], {
+  // --http : le test parle en clair, sans dependre du certificat local.
+  const serveur = spawn(process.execPath, [path.join(__dirname, 'serveur.js'), '--http'], {
     env: {
       ...process.env,
       EBS_PORT: String(PORT),

@@ -9,12 +9,18 @@
    3. le servir à ceux qui ouvrent le tableau en cours de partie (GET /etat),
       car le PubSub ne rejoue pas ce qui est déjà passé.
 
-   Configuration, par variables d'environnement — jamais dans le dépôt :
+   Configuration, par ebs/config.json ou par variables d'environnement — dans
+   les deux cas hors du dépôt :
 
-     EXT_CLIENT_ID   identifiant client de l'extension (console Twitch)
-     EXT_SECRET      secret de l'extension, en base64, tel que Twitch le donne
+     EXT_CLIENT_ID    identifiant client de l'extension (console Twitch)
+     EXT_SECRET       secret de l'extension, en base64, tel que Twitch le donne
      EXT_PROPRIETAIRE identifiant utilisateur Twitch du propriétaire
-     EBS_PORT        8081 par défaut
+     EBS_PORT         8081 par défaut
+
+   Le fichier évite de taper le secret dans le terminal, où il resterait dans
+   l'historique :
+
+     { "clientId": "...", "secret": "...", "proprietaire": "..." }
 
    Le secret ne transite jamais vers un viewer ni vers ton PC : seul l'EBS le
    connaît. Ton PC s'authentifie avec un jeton d'appairage, propre à ta chaîne
@@ -30,10 +36,21 @@ const path = require('path');
 
 const jwt = require('./jwt.js');
 
-const PORT = Number(process.env.EBS_PORT || 8081);
-const CLIENT_ID = process.env.EXT_CLIENT_ID || '';
-const SECRET_B64 = process.env.EXT_SECRET || '';
-const PROPRIETAIRE = process.env.EXT_PROPRIETAIRE || '';
+/* L'environnement l'emporte sur le fichier : pratique en hébergement, où les
+   secrets arrivent souvent par variables. */
+function fichierConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+const CONFIG = fichierConfig();
+const PORT = Number(process.env.EBS_PORT || CONFIG.port || 8081);
+const CLIENT_ID = process.env.EXT_CLIENT_ID || CONFIG.clientId || '';
+const SECRET_B64 = process.env.EXT_SECRET || CONFIG.secret || '';
+const PROPRIETAIRE = process.env.EXT_PROPRIETAIRE || CONFIG.proprietaire || '';
 const APPAIRAGES = path.join(__dirname, 'appairages.json');
 
 // Twitch livre le secret en base64 : on le décode une fois pour toutes.
@@ -287,15 +304,21 @@ function main() {
   ].filter(Boolean);
 
   if (manques.length) {
-    console.error(`Variables d'environnement manquantes : ${manques.join(', ')}`);
-    console.error('Elles viennent de la console Twitch. Ne les mets pas dans le dépôt.');
+    console.error(`Réglages manquants : ${manques.join(', ')}`);
+    console.error('Ils viennent de la console Twitch. Renseigne-les dans');
+    console.error(`  ${path.join(__dirname, 'config.json')}`);
+    console.error('  { "clientId": "...", "secret": "...", "proprietaire": "..." }');
+    console.error("ou dans l'environnement. Ce fichier est ignoré par git.");
     process.exit(1);
   }
 
+  // --http force le texte clair : utile pour les tests, et pour déboguer sans
+  // la fenêtre d'avertissement du navigateur.
+  const sansTls = process.argv.includes('--http');
   const certs = path.join(__dirname, '..', 'certs');
   const cle = path.join(certs, 'localhost.key');
   const cert = path.join(certs, 'localhost.crt');
-  const tls = fs.existsSync(cle) && fs.existsSync(cert)
+  const tls = !sansTls && fs.existsSync(cle) && fs.existsSync(cert)
     ? { key: fs.readFileSync(cle), cert: fs.readFileSync(cert) }
     : null;
 

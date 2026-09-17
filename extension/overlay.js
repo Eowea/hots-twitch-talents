@@ -230,27 +230,23 @@ function recevoir(etat) {
    LES SOURCES
    ========================================================================= */
 
-function brancherTwitch() {
+let sourceChoisie = null;
+
+function brancherTwitch(auth) {
+  // onAuthorized se déclenche aussi au renouvellement du jeton : on ne
+  // s'abonne qu'une fois, mais on refait l'appel d'état à chaque fois, sans
+  // dommage.
+  if (sourceChoisie !== 'twitch') {
+    sourceChoisie = 'twitch';
+    brancherEcoutes();
+  }
+  demanderEtatCourant(auth);
+}
+
+function brancherEcoutes() {
   window.Twitch.ext.onContext((contexte) => {
     if (typeof contexte.hlsLatencyBroadcaster === 'number') {
       retardSecondes = contexte.hlsLatencyBroadcaster;
-    }
-  });
-
-  /* Le PubSub ne rejoue pas ce qui est déjà passé : sans cet appel, un viewer
-     qui ouvre le tableau en pleine partie attendrait le prochain message. On
-     demande l'état tel qu'il était il y a le retard de son flux, pour ne rien
-     lui divulguer que son image ne montre pas encore. */
-  window.Twitch.ext.onAuthorized(async (auth) => {
-    try {
-      const url = `${window.REGLAGES.ebs}/etat?retard=${Math.round(retardSecondes)}`;
-      const reponse = await fetch(url, {
-        headers: { authorization: `Bearer ${auth.token}` },
-        cache: 'no-store',
-      });
-      if (reponse.ok) afficher(await reponse.json());
-    } catch {
-      // EBS injoignable : le prochain message PubSub fera l'affaire.
     }
   });
 
@@ -263,10 +259,27 @@ function brancherTwitch() {
   });
 }
 
-/* Le script d'aide de Twitch définit window.Twitch même hors du lecteur : sa
-   seule présence ne prouve donc rien. On sonde plutôt le serveur local, qui
-   n'existe qu'en test — sur Twitch la requête échoue, et seul le PubSub
-   alimente le tableau. */
+/* Le PubSub ne rejoue pas ce qui est déjà passé : sans cet appel, un viewer
+   qui ouvre le tableau en pleine partie attendrait le prochain message. On
+   demande l'état tel qu'il était il y a le retard de son flux, pour ne rien
+   lui divulguer que son image ne montre pas encore. */
+async function demanderEtatCourant(auth) {
+  try {
+    const url = `${window.REGLAGES.ebs}/etat?retard=${Math.round(retardSecondes)}`;
+    const reponse = await fetch(url, {
+      headers: { authorization: `Bearer ${auth.token}` },
+      cache: 'no-store',
+    });
+    if (reponse.ok) afficher(await reponse.json());
+  } catch {
+    // EBS injoignable : le prochain message PubSub fera l'affaire.
+  }
+}
+
+/* Le script d'aide de Twitch définit window.Twitch même hors du lecteur, et en
+   test local l'extension est servie par le même serveur que /etat : ni l'un ni
+   l'autre ne distingue donc le test du direct. Seul onAuthorized le fait — il
+   ne se déclenche que dans le lecteur Twitch. */
 async function serveurLocalPresent() {
   try {
     const reponse = await fetch('/etat', { cache: 'no-store' });
@@ -323,10 +336,22 @@ chargerTable().then(() => {
   cadre.append(bascule);
 
   ajuster();
-  if (window.Twitch && window.Twitch.ext) brancherTwitch();
-  return serveurLocalPresent().then((present) => {
-    if (present) brancherServeurLocal();
-  });
+
+  if (window.Twitch && window.Twitch.ext) {
+    window.Twitch.ext.onAuthorized((auth) => brancherTwitch(auth));
+  }
+
+  /* Si onAuthorized ne s'est pas déclenché, c'est qu'on n'est pas dans le
+     lecteur : on se rabat alors sur le serveur local, s'il répond. */
+  setTimeout(() => {
+    if (sourceChoisie) return;
+    serveurLocalPresent().then((present) => {
+      if (present && !sourceChoisie) {
+        sourceChoisie = 'local';
+        brancherServeurLocal();
+      }
+    });
+  }, 1500);
 }).catch((err) => {
   console.error(err);
   $('#attente').textContent = 'Table des talents introuvable.';

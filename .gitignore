@@ -10,4 +10,5 @@ certs/
 # appairages.json contient les jetons de toutes les chaînes appairées,
 # pont.config.json celui de ta machine.
 ebs/appairages.json
+ebs/config.json
 pont.config.json
