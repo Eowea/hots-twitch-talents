@@ -26,7 +26,7 @@
      lecteur, qui va du plein écran à une petite fenêtre. */
   --icone: 34px;
   --portrait: 28px;
-  --nom: 132px;
+  --nom: 158px;
 }
 
 * { box-sizing: border-box; }
@@ -163,7 +163,10 @@ html, body {
 .colonne { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0; min-width: 0; }
 .separateur { width: 1px; background: rgba(226, 216, 255, 0.1); }
 
-.bandeau { display: flex; align-items: center; gap: 9px; }
+.bandeau { display: flex; align-items: baseline; gap: 9px; }
+
+/* Le nom d'equipe garde sa place, le niveau se pose juste apres. */
+.bandeau h2 { flex-shrink: 0; }
 
 .bandeau h2 {
   margin: 0;
@@ -183,7 +186,7 @@ html, body {
 .paliers {
   display: flex;
   gap: 6px;
-  padding-left: calc(var(--portrait) + var(--nom) + 34px + 24px);
+  padding-left: calc(var(--portrait) + var(--nom) + 16px);
 }
 
 .paliers span {
@@ -225,16 +228,18 @@ html, body {
   text-overflow: ellipsis;
 }
 
-.niveau {
-  width: 34px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 700;
+/* Le niveau est commun a l'equipe : il vit dans le bandeau, pas sur chaque
+   ligne. La colonne ainsi liberee profite aux noms de heros. */
+.niveau-equipe {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
+  color: var(--attenue);
 }
 
-.ligne[data-equipe="1"] .niveau { color: var(--equipe-1); }
-.ligne[data-equipe="2"] .niveau { color: var(--equipe-2); }
+.colonne[data-equipe="1"] .niveau-equipe { color: var(--equipe-1); }
+.colonne[data-equipe="2"] .niveau-equipe { color: var(--equipe-2); }
 
 .talents { display: flex; gap: 6px; }
 
@@ -306,13 +311,13 @@ html, body {
    ========================================================================= */
 
 /* Budget de largeur, pour 318 px moins 20 px de marges = 298 px :
-   portrait 18 + nom 72 + niveau 16 + (7 icones de 24 + 6 espaces de 2) 180
-   + 3 espaces de ligne de 4 = 298. Chaque pixel donne au nom est pris aux
-   icones : c'est l'arbitrage de cette largeur. */
+   portrait 18 + nom 92 + (7 icones de 24 + 6 espaces de 2) 180 + 2 espaces de
+   ligne de 4 = 298. Le niveau ayant rejoint le bandeau, ses 16 px et son
+   espace sont revenus au nom — de quoi loger « The Lost Vikings » en entier. */
 [data-mode="panneau"] {
   --icone: 24px;
   --portrait: 18px;
-  --nom: 72px;
+  --nom: 92px;
 }
 
 [data-mode="panneau"] body,
@@ -354,7 +359,7 @@ body[data-mode="panneau"] {
 
 [data-mode="panneau"] .paliers {
   gap: 2px;
-  padding-left: calc(var(--portrait) + var(--nom) + 16px + 12px);
+  padding-left: calc(var(--portrait) + var(--nom) + 8px);
 }
 
 [data-mode="panneau"] .paliers span { font-size: 10px; }
@@ -367,5 +372,5 @@ body[data-mode="panneau"] {
 [data-mode="panneau"] .identite .tag { display: none; }
 [data-mode="panneau"] .identite .heros { font-size: 12px; }
 
-[data-mode="panneau"] .niveau { width: 16px; font-size: 12px; }
+[data-mode="panneau"] .niveau-equipe { font-size: 11px; }
 [data-mode="panneau"] .attente { padding: 24px 12px; font-size: 13px; }

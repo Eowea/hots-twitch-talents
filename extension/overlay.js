@@ -121,11 +121,6 @@ function creerLigne(joueur) {
   identite.append(nom, tag);
   ligne.append(identite);
 
-  const niveau = document.createElement('div');
-  niveau.className = 'niveau';
-  niveau.textContent = joueur.l || 0;
-  ligne.append(niveau);
-
   const talents = document.createElement('div');
   talents.className = 'talents';
   for (let i = 0; i < PALIERS.length; i++) {
@@ -167,6 +162,21 @@ function afficher(etat) {
 
   for (const equipe of [1, 2]) {
     const colonne = document.querySelector(`.colonne[data-equipe="${equipe}"]`);
+    const joueurs = etat.j.filter((j) => j.e === equipe);
+
+    /* Le niveau est commun a toute l'equipe : le repeter sur chaque ligne
+       repeterait la meme information cinq fois, et volerait une colonne aux
+       icones. On prend le plus haut vu, au cas ou un evenement de montee de
+       niveau manquerait pour un joueur. */
+    const niveau = joueurs.reduce((max, j) => Math.max(max, j.l || 0), 0);
+    let cartouche = colonne.querySelector('.niveau-equipe');
+    if (!cartouche) {
+      cartouche = document.createElement('span');
+      cartouche.className = 'niveau-equipe';
+      colonne.querySelector('.bandeau').append(cartouche);
+    }
+    cartouche.textContent = niveau ? `niveau ${niveau}` : '';
+
     const paliers = colonne.querySelector('.paliers');
     if (!paliers.childElementCount) {
       for (const n of PALIERS) {
@@ -176,7 +186,7 @@ function afficher(etat) {
       }
     }
     const lignes = colonne.querySelector('.lignes');
-    lignes.replaceChildren(...etat.j.filter((j) => j.e === equipe).map(creerLigne));
+    lignes.replaceChildren(...joueurs.map(creerLigne));
   }
 
   ajuster();

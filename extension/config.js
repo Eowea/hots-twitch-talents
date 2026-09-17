@@ -36,9 +36,9 @@ if (!window.Twitch || !window.Twitch.ext) {
 } else {
   setTimeout(() => {
     if (autorise) return;
-    dire('Twitch n\'a pas autorisé la page au bout de 6 secondes. C\'est en '
-      + 'général le certificat de localhost qui n\'a pas été accepté dans ce '
-      + 'navigateur, ou l\'extension qui n\'est pas installée sur la chaîne. '
+    dire("Twitch n'a pas autorisé la page au bout de 6 secondes. C'est en "
+      + "général que l'extension n'est pas installée sur la chaîne, ou que "
+      + 'cette page a été ouverte hors du gestionnaire d\'extensions. '
       + 'Ouvre la console (F12) : le vrai motif y est écrit.', true);
   }, DELAI_TWITCH);
 
