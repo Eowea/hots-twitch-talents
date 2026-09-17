@@ -23,6 +23,11 @@ const PALIERS = [1, 4, 7, 10, 13, 16, 20];
 const $ = (sel) => document.querySelector(sel);
 const aplatir = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 
+/* Le panneau et la superposition partagent tout sauf leur cadre : l'un est
+   toujours visible dans 318 px imposes par Twitch, l'autre s'ouvre au clic
+   par-dessus la video et se met a l'echelle du lecteur. */
+const MODE_PANNEAU = document.body.dataset.mode === 'panneau';
+
 const cadre = $('.cadre');
 const tableau = $('#tableau');
 const boutonOuvrir = $('#ouvrir');
@@ -184,6 +189,8 @@ function afficher(etat) {
    ========================================================================= */
 
 function ajuster() {
+  if (MODE_PANNEAU) return; // Largeur imposee : rien a calculer.
+
   const dispoLargeur = document.documentElement.clientWidth - 40;
   const dispoHauteur = document.documentElement.clientHeight - 40;
   const etroit = dispoLargeur / LARGEUR_LARGE < SEUIL_ETROIT;
@@ -202,6 +209,8 @@ function ajuster() {
 }
 
 function appliquerEtroit() {
+  if (MODE_PANNEAU) return; // Les deux equipes restent affichees.
+
   const etroit = cadre.classList.contains('etroit');
   for (const equipe of [1, 2]) {
     const colonne = document.querySelector(`.colonne[data-equipe="${equipe}"]`);
@@ -308,32 +317,39 @@ function brancherServeurLocal() {
    DEMARRAGE
    ========================================================================= */
 
-boutonOuvrir.addEventListener('click', () => {
-  tableau.hidden = false;
-  boutonOuvrir.hidden = true;
-  boutonOuvrir.setAttribute('aria-expanded', 'true');
-  ajuster();
-});
-
-$('#fermer').addEventListener('click', () => {
-  tableau.hidden = true;
-  boutonOuvrir.hidden = false;
-  boutonOuvrir.setAttribute('aria-expanded', 'false');
-  boutonOuvrir.focus();
-});
-
-window.addEventListener('resize', ajuster);
-
-chargerTable().then(() => {
-  const bascule = document.createElement('button');
-  bascule.id = 'bascule';
-  bascule.className = 'bascule';
-  bascule.type = 'button';
-  bascule.addEventListener('click', () => {
-    equipeAffichee = equipeAffichee === 1 ? 2 : 1;
+/* En mode panneau, le tableau est toujours là : ni bouton d'ouverture, ni
+   fermeture, ni bascule d'équipe — Twitch impose la largeur, et la feuille de
+   style s'en charge. */
+if (!MODE_PANNEAU) {
+  boutonOuvrir.addEventListener('click', () => {
+    tableau.hidden = false;
+    boutonOuvrir.hidden = true;
+    boutonOuvrir.setAttribute('aria-expanded', 'true');
     ajuster();
   });
-  cadre.append(bascule);
+
+  $('#fermer').addEventListener('click', () => {
+    tableau.hidden = true;
+    boutonOuvrir.hidden = false;
+    boutonOuvrir.setAttribute('aria-expanded', 'false');
+    boutonOuvrir.focus();
+  });
+
+  window.addEventListener('resize', ajuster);
+}
+
+chargerTable().then(() => {
+  if (!MODE_PANNEAU) {
+    const bascule = document.createElement('button');
+    bascule.id = 'bascule';
+    bascule.className = 'bascule';
+    bascule.type = 'button';
+    bascule.addEventListener('click', () => {
+      equipeAffichee = equipeAffichee === 1 ? 2 : 1;
+      ajuster();
+    });
+    cadre.append(bascule);
+  }
 
   ajuster();
 

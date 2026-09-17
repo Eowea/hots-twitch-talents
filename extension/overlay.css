@@ -291,3 +291,81 @@ html, body {
 }
 
 .cadre.etroit.partie .bascule { display: block; }
+
+/* =========================================================================
+   MODE PANNEAU
+
+   Un panneau Twitch fait 318 px de large, 500 px de haut au plus, et reste
+   visible en permanence sous le stream — y compris quand la chaîne est hors
+   ligne, contrairement à la superposition vidéo.
+
+   Tout doit donc tenir dans un tiers de la largeur de l'overlay : les deux
+   équipes l'une sous l'autre, le battletag sacrifié au profit du nom du
+   héros, et des icônes réduites. Le tableau reste complet : dix joueurs,
+   sept paliers.
+   ========================================================================= */
+
+/* Budget de largeur, pour 318 px moins 20 px de marges = 298 px :
+   portrait 18 + nom 72 + niveau 16 + (7 icones de 24 + 6 espaces de 2) 180
+   + 3 espaces de ligne de 4 = 298. Chaque pixel donne au nom est pris aux
+   icones : c'est l'arbitrage de cette largeur. */
+[data-mode="panneau"] {
+  --icone: 24px;
+  --portrait: 18px;
+  --nom: 72px;
+}
+
+[data-mode="panneau"] body,
+body[data-mode="panneau"] {
+  background: var(--profond);
+}
+
+[data-mode="panneau"] .tableau { position: static; display: block; }
+
+[data-mode="panneau"] .cadre {
+  width: 100%;
+  transform: none; /* La largeur est imposée par Twitch, pas mise à l'échelle. */
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+[data-mode="panneau"] .entete {
+  gap: 8px;
+  padding: 9px 10px;
+}
+
+[data-mode="panneau"] .titre { font-size: 14px; letter-spacing: 0.08em; }
+[data-mode="panneau"] .carte { display: none; }
+[data-mode="panneau"] .filet { display: none; }
+[data-mode="panneau"] .chrono { font-size: 14px; }
+[data-mode="panneau"] .bans-libelle { display: none; }
+[data-mode="panneau"] .bans img { width: 18px; height: 21px; }
+
+[data-mode="panneau"] .corps {
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 10px 12px;
+}
+
+[data-mode="panneau"] .separateur { display: none; }
+[data-mode="panneau"] .colonne { gap: 7px; }
+[data-mode="panneau"] .bandeau h2 { font-size: 11px; letter-spacing: 0.1em; }
+
+[data-mode="panneau"] .paliers {
+  gap: 2px;
+  padding-left: calc(var(--portrait) + var(--nom) + 16px + 12px);
+}
+
+[data-mode="panneau"] .paliers span { font-size: 10px; }
+[data-mode="panneau"] .lignes { gap: 4px; }
+[data-mode="panneau"] .ligne { gap: 4px; }
+[data-mode="panneau"] .talents { gap: 2px; }
+
+/* Le pseudo ne tient pas : on ne garde que le héros, qui est l'information
+   que le viewer cherche dans un tableau de talents. */
+[data-mode="panneau"] .identite .tag { display: none; }
+[data-mode="panneau"] .identite .heros { font-size: 12px; }
+
+[data-mode="panneau"] .niveau { width: 16px; font-size: 12px; }
+[data-mode="panneau"] .attente { padding: 24px 12px; font-size: 13px; }

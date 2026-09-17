@@ -262,3 +262,8 @@ Brancher sur la vraie extension.
 3. **Hébergement** — l'EBS doit être joignable en HTTPS depuis l'extérieur.
 4. **Police** — Twitch bloque les polices externes. Embarquer Rajdhani (licence
    libre) dans l'archive remplacerait la pile système actuelle.
+
+Le panneau tient dans les 318 px imposés par Twitch : portrait 18, nom 72,
+niveau 16, sept icônes de 24, plus les espaces — 298 px exactement. Chaque
+pixel donné au nom est pris aux icônes, c'est tout l'arbitrage de cette
+largeur.

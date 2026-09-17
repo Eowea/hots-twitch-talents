@@ -17,10 +17,12 @@
 
      node pont.js
      node pont.js --demo "<replay.StormReplay>" --vitesse 20
+     node pont.js --dernier --vitesse 20      rejoue la derniere partie jouee
    ========================================================================= */
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const bl = require('./battlelobby.js');
@@ -125,6 +127,39 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
   };
 }
 
+/* Les noms de replay contiennent accents et apostrophes typographiques : les
+   recopier a la main est une source d'erreur inutile. --dernier evite ca. */
+function dernierReplay() {
+  const racine = path.join(os.homedir(), 'Documents', 'Heroes of the Storm', 'Accounts');
+  const trouves = [];
+
+  const parcourir = (dossier, profondeur) => {
+    if (profondeur > 5) return;
+    let entrees = [];
+    try {
+      entrees = fs.readdirSync(dossier, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entree of entrees) {
+      const chemin = path.join(dossier, entree.name);
+      if (entree.isDirectory()) parcourir(chemin, profondeur + 1);
+      else if (entree.name.endsWith('.StormReplay')) {
+        trouves.push({ chemin, date: fs.statSync(chemin).mtimeMs });
+      }
+    }
+  };
+
+  parcourir(racine, 0);
+  if (!trouves.length) {
+    console.error('Aucun replay trouvé sous Documents\\Heroes of the Storm.');
+    process.exit(1);
+  }
+  trouves.sort((a, b) => b.date - a.date);
+  console.log(`Dernière partie : ${path.basename(trouves[0].chemin)}`);
+  return trouves[0].chemin;
+}
+
 /* =========================================================================
    SOURCES
    ========================================================================= */
@@ -202,7 +237,7 @@ function main() {
   console.log(`Chaîne: ${config.canal}\n`);
 
   const envoyer = creerEnvoyeur(config);
-  const demo = valeur('--demo');
+  const demo = args.includes('--dernier') ? dernierReplay() : valeur('--demo');
 
   if (demo) {
     if (!fs.existsSync(demo)) { console.error(`introuvable : ${demo}`); process.exit(1); }
