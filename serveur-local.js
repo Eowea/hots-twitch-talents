@@ -167,7 +167,8 @@ const TYPES = {
    aucune erreur n'apparaît dans l'onglet Réseau. */
 const ENTETES_RESEAU_PRIVE = {
   'access-control-allow-origin': '*',
-  'access-control-allow-headers': '*',
+  'access-control-allow-headers': 'authorization, content-type',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
   'access-control-allow-private-network': 'true',
 };
 

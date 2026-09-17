@@ -169,9 +169,14 @@ function repondre(reponse, code, corps) {
     // L'extension est servie depuis le domaine de Twitch, pas depuis ici ; et
     // Chrome exige qu'un serveur local autorise explicitement les appels
     // venant d'une page publique.
+    // « authorization » doit etre nomme : le joker « * » ne le couvre pas,
+    // c'est une exception de la norme CORS. Or c'est l'en-tete que portent
+    // tous nos appels.
     'access-control-allow-origin': '*',
-    'access-control-allow-headers': '*',
+    'access-control-allow-headers': 'authorization, content-type',
+    'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-allow-private-network': 'true',
+    'access-control-max-age': '86400',
   });
   reponse.end(texte);
 }
