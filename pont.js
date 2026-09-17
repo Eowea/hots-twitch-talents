@@ -169,9 +169,15 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
   /* Le rappel périodique : il ne part que si rien d'autre n'est parti
      entre-temps, donc il ne s'ajoute jamais au trafic d'une partie animée. */
   setInterval(() => {
-    if (!enAttente && dernierCorps && Date.now() - derniere >= RAPPEL) {
-      pousser(JSON.parse(dernierCorps), true);
-    }
+    if (enAttente || !dernierCorps || Date.now() - derniere < RAPPEL) return;
+
+    /* Et il s'arrete des qu'il n'y a plus de partie. Sans cette condition, un
+       lecteur laisse ouvert toute la journee republierait un tableau vide
+       toutes les dix secondes : pres de neuf mille appels quotidiens pour
+       rien, de quoi epuiser le quota gratuit a quelques utilisateurs. */
+    const etat = JSON.parse(dernierCorps);
+    if (!etat.j || etat.j.length === 0) return;
+    pousser(etat, true);
   }, RAPPEL).unref();
 
   /* On ne pousse jamais plus d'un message toutes les deux secondes ; le
