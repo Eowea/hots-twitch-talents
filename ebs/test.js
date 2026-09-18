@@ -54,7 +54,7 @@ const chargeExemple = (t) => ({
   t,
   carte: 'Les champs de l’éternité',
   bans: ['Garrosh', 'MeiOW'],
-  j: [{ e: 1, n: 'Eowea#21654', h: 'Malganis', l: 20, t: ['MalGanisVampiricTouchVampiricAura'] }],
+  j: [{ e: 1, n: 'Bnet#123456', h: 'Malganis', l: 20, t: ['MalGanisVampiricTouchVampiricAura'] }],
 });
 
 async function main() {

@@ -64,7 +64,7 @@ lui-même. Aucune injection, aucune lecture mémoire, donc aucun risque côté
 Blizzard.
 
 **Le discriminant du battletag ne quitte jamais la machine du streamer.**
-« Eowea#21654 » devient « Eowea » dans `live.js`, avant tout envoi : ni l'EBS,
+« Bnet#123456 » devient « Bnet » dans `live.js`, avant tout envoi : ni l'EBS,
 ni Twitch, ni les viewers ne le voient. Les neuf autres joueurs d'une partie
 n'ont rien demandé — leur identifiant unique n'a aucune raison d'être diffusé à
 une audience, quand le pseudo seul suffit à reconnaître quelqu'un.

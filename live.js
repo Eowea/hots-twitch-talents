@@ -222,8 +222,8 @@ function equipeDuDiffuseur(vue) {
    le PubSub de Twitch plafonne a 5 Ko par message, et c'est l'overlay qui
    traduit les identifiants en noms et en icones.
 
-   Le discriminant du battletag est retire ici, a la source. « Eowea#21654 »
-   devient « Eowea ». Les neuf autres joueurs d'une partie n'ont rien demande :
+   Le discriminant du battletag est retire ici, a la source. « Bnet#123456 »
+   devient « Bnet ». Les neuf autres joueurs d'une partie n'ont rien demande :
    leur identifiant unique n'a donc aucune raison de quitter cette machine,
    encore moins d'etre diffuse a une audience. Le pseudo seul suffit largement
    a reconnaitre quelqu'un, et n'identifie personne a lui seul.
