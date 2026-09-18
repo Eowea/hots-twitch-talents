@@ -23,6 +23,12 @@ const PALIERS = [1, 4, 7, 10, 13, 16, 20];
 const $ = (sel) => document.querySelector(sel);
 const aplatir = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 
+/* talents.json porte les deux langues pour chaque héros et chaque talent.
+   LANGUE et texteDe() viennent de langue.js, chargé juste avant ce script.
+   Le repli sur l'anglais est écrit ici aussi : une entrée incomplète dans la
+   table doit laisser un nom lisible, pas une case vide. */
+const enLangue = (entree) => (entree && (entree[LANGUE] || entree.en)) || '';
+
 /* Le panneau et la superposition partagent tout sauf leur cadre : l'un est
    toujours visible dans 318 px imposes par Twitch, l'autre s'ouvre au clic
    par-dessus la video et se met a l'echelle du lecteur. */
@@ -101,7 +107,7 @@ function creerCase(hero, identifiant) {
   const img = document.createElement('img');
   img.className = 'case';
   img.src = urlIcone(talent.icone);
-  img.alt = talent.fr;
+  img.alt = enLangue(talent);
   img.tabIndex = 0;
   talentDeLaCase.set(img, talent);
   return img;
@@ -123,7 +129,7 @@ function creerLigne(joueur) {
   identite.className = 'identite';
   const nom = document.createElement('div');
   nom.className = 'heros';
-  nom.textContent = hero ? hero.nom.fr : joueur.h;
+  nom.textContent = hero ? enLangue(hero.nom) : joueur.h;
   const tag = document.createElement('div');
   tag.className = 'tag';
   tag.textContent = joueur.n || '';
@@ -164,8 +170,8 @@ function afficher(etat) {
     if (!hero || !hero.portrait) continue;
     const img = document.createElement('img');
     img.src = urlPortrait(hero.portrait);
-    img.alt = hero.nom.fr;
-    img.title = hero.nom.fr;
+    img.alt = enLangue(hero.nom);
+    img.title = enLangue(hero.nom);
     bans.append(img);
   }
 
@@ -184,7 +190,7 @@ function afficher(etat) {
       cartouche.className = 'niveau-equipe';
       colonne.querySelector('.bandeau').append(cartouche);
     }
-    cartouche.textContent = niveau ? `niveau ${niveau}` : '';
+    cartouche.textContent = niveau ? texteDe('niveau', { n: niveau }) : '';
 
     const paliers = colonne.querySelector('.paliers');
     if (!paliers.childElementCount) {
@@ -250,10 +256,10 @@ function remplirInfobulle(talent) {
   const titres = document.createElement('div');
   const nom = document.createElement('div');
   nom.className = 'infobulle-nom';
-  nom.textContent = talent.fr;
+  nom.textContent = enLangue(talent);
   const palier = document.createElement('div');
   palier.className = 'infobulle-palier';
-  palier.textContent = `PALIER ${talent.niveau}`;
+  palier.textContent = texteDe('palier', { n: talent.niveau });
   titres.append(nom, palier);
   entete.append(titres);
   infobulle.append(entete);
@@ -262,7 +268,7 @@ function remplirInfobulle(talent) {
   texte.className = 'infobulle-texte';
   // textContent, jamais innerHTML : ces textes viennent d'un fichier de
   // donnees, et rien ne justifie de leur laisser injecter du balisage.
-  texte.textContent = (talent.d && talent.d.fr) || '';
+  texte.textContent = enLangue(talent.d);
   if (texte.textContent) infobulle.append(texte);
 }
 
@@ -350,7 +356,7 @@ function appliquerEtroit() {
   }
   const bascule = $('#bascule');
   if (bascule) {
-    bascule.textContent = equipeAffichee === 1 ? 'Voir l’équipe rouge →' : '← Voir l’équipe bleue';
+    bascule.textContent = texteDe(equipeAffichee === 1 ? 'voirRouge' : 'voirBleue');
   }
 }
 
@@ -487,5 +493,5 @@ chargerTable().then(() => {
   }, 1500);
 }).catch((err) => {
   console.error(err);
-  $('#attente').textContent = 'Table des talents introuvable.';
+  $('#attente').textContent = texteDe('tableIntrouvable');
 });

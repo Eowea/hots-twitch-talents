@@ -4,37 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talents — en direct</title>
-<link rel="stylesheet" href="panneaux.css?v=4">
+<link rel="stylesheet" href="panneaux.css?v=5">
 <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 <!-- Le ?v= force le navigateur à relire ce fichier quand il change : sans
      lui, une adresse d'EBS modifiée reste en cache et l'extension appelle
      l'ancienne, sans autre symptôme qu'un « injoignable ». À incrémenter à
      chaque modification de reglages.js. -->
-<script src="reglages.js?v=4"></script>
+<script src="reglages.js?v=5"></script>
 </head>
-<body>
 
-<h1>TALENTS</h1>
-<p class="sous-titre">État du lecteur pendant ton direct.</p>
+<body data-titre="titreDirect">
+
+<h1 data-t="talents">TALENTS</h1>
+<p class="sous-titre" data-t="directSousTitre">État du lecteur pendant ton direct.</p>
 
 <section>
-  <h2>Lecteur</h2>
+  <h2 data-t="directLecteur">Lecteur</h2>
   <p class="pastille-etat" id="etat" data-actif="non">
     <span class="voyant" aria-hidden="true"></span>
-    <span id="etat-texte">Vérification…</span>
+    <span id="etat-texte" data-t="directVerification">Vérification…</span>
   </p>
   <p class="detail" id="detail"></p>
 </section>
 
 <section>
-  <h2>Si rien n'arrive</h2>
+  <h2 data-t="directSiRien">Si rien n'arrive</h2>
+  <!-- La phrase est coupée autour du nom du programme : il ne se traduit pas,
+       et les deux langues le placent au même endroit. -->
   <p class="detail">
-    Lance <code>node pont.js</code> sur ton PC, avant ou pendant la partie.
+    <span data-t="directSiRienDebut">Lance</span>
+    <code>lecteur.exe</code>
+    <span data-t="directSiRienFin">sur ton PC, avant ou pendant la partie.
     Le lecteur n'a besoin de rien d'autre : il lit un fichier que le jeu écrit
-    lui-même, et se met à envoyer dès que la carte est chargée.
+    lui-même, et se met à envoyer dès que la carte est chargée.</span>
   </p>
 </section>
 
-<script src="live_config.js?v=4"></script>
+<script src="langue.js?v=5"></script>
+<script src="live_config.js?v=5"></script>
 </body>
 </html>

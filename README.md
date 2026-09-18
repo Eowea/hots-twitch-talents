@@ -120,7 +120,7 @@ tracker.events  ->  lecteur  ->  fonction  ->  PubSub  ->  overlay / panneau
                     son jeton   le secret
 ```
 
-Quatre points déjà tranchés :
+Cinq points déjà tranchés :
 
 - **Deux surfaces, un seul code.** La superposition vidéo
   (`video_overlay.html`) se déploie au clic par-dessus le lecteur ; le panneau
@@ -139,6 +139,12 @@ Quatre points déjà tranchés :
   `hlsLatencyBroadcaster` (10-20 s). En overlay le tableau est collé à l'image :
   sans tampon, un talent apparaîtrait avant que le joueur ne le prenne à
   l'écran.
+- **Une seule extension, deux langues.** Twitch donne la langue du spectateur
+  dans l'adresse de l'iframe (`?language=fr&locale=fr-FR`) ; `langue.js` la lit
+  et traduit la page avant le premier rendu, avec repli sur l'anglais pour
+  toute autre langue. `talents.json` portait déjà les deux langues. Attention
+  au faux ami : le `language` de `onContext()` est celui de la **diffusion**,
+  pas du spectateur.
 
 ## Fichiers
 
@@ -154,6 +160,8 @@ Quatre points déjà tranchés :
 | `heroes.js` | dictionnaire de noms de héros |
 | `serveur-local.js` | sert l'overlay et la charge utile, en direct ou en rejeu |
 | `extension/` | l'extension Twitch : overlay, panneau, habillage, table des talents |
+| `extension/langue.js` | détection de la langue du viewer et textes de l'interface |
+| `outils/verifier-langue.js` | refuse une traduction incomplète avant l'archive |
 | `outils/generer-talents.js` | reconstruit `extension/talents.json` depuis BUILDS |
 | `outils/construire.js` | fabrique `build/lecteur.exe`, de bout en bout |
 | `outils/empaqueter.js` | replie les modules du lecteur en un script unique |

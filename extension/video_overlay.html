@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talents — Heroes of the Storm</title>
-<link rel="stylesheet" href="overlay.css?v=4">
+<link rel="stylesheet" href="overlay.css?v=5">
 <!-- Le script d'aide de Twitch. Attention : il se charge et définit window.Twitch
      même hors du lecteur, donc sa présence ne prouve rien. C'est le serveur
      local, sondé par overlay.js, qui distingue le test du direct. -->
@@ -13,48 +13,52 @@
      lui, une adresse d'EBS modifiée reste en cache et l'extension appelle
      l'ancienne, sans autre symptôme qu'un « injoignable ». À incrémenter à
      chaque modification de reglages.js. -->
-<script src="reglages.js?v=4"></script>
+<script src="reglages.js?v=5"></script>
 </head>
-<body>
+
+<!-- Le texte écrit ici est le français ; langue.js le remplace au chargement
+     par celui du spectateur, avant le premier rendu. -->
+<body data-titre="titreTableau">
 
 <!-- Tout est transparent tant que le viewer n'ouvre rien : Twitch refuse les
      extensions qui masquent durablement la vidéo. -->
 <button id="ouvrir" class="pastille" type="button" aria-expanded="false" aria-controls="tableau">
   <span class="pastille-hex" aria-hidden="true"></span>
-  <span>TALENTS</span>
+  <span data-t="talents">TALENTS</span>
 </button>
 
 <div id="tableau" class="tableau" hidden>
   <div class="cadre">
     <header class="entete">
-      <span class="titre">TALENTS</span>
+      <span class="titre" data-t="talents">TALENTS</span>
       <span class="filet" aria-hidden="true"></span>
       <span id="carte" class="carte"></span>
       <span id="chrono" class="chrono"></span>
       <span class="pousse"></span>
-      <span id="bans-libelle" class="bans-libelle" hidden>BANNIS</span>
+      <span id="bans-libelle" class="bans-libelle" data-t="bannis" hidden>BANNIS</span>
       <span id="bans" class="bans"></span>
-      <button id="fermer" class="fermer" type="button" aria-label="Fermer le tableau">&#215;</button>
+      <button id="fermer" class="fermer" type="button" data-t-aria="fermerTableau" aria-label="Fermer le tableau">&#215;</button>
     </header>
 
     <div class="corps">
       <section class="colonne" data-equipe="1">
-        <div class="bandeau"><span class="marque"></span><h2>ÉQUIPE BLEUE</h2></div>
+        <div class="bandeau"><span class="marque"></span><h2 data-t="equipeBleue">ÉQUIPE BLEUE</h2></div>
         <div class="paliers" aria-hidden="true"></div>
         <div class="lignes"></div>
       </section>
       <div class="separateur" aria-hidden="true"></div>
       <section class="colonne" data-equipe="2">
-        <div class="bandeau"><span class="marque"></span><h2>ÉQUIPE ROUGE</h2></div>
+        <div class="bandeau"><span class="marque"></span><h2 data-t="equipeRouge">ÉQUIPE ROUGE</h2></div>
         <div class="paliers" aria-hidden="true"></div>
         <div class="lignes"></div>
       </section>
     </div>
 
-    <p id="attente" class="attente">En attente d'une partie…</p>
+    <p id="attente" class="attente" data-t="attente">En attente d'une partie…</p>
   </div>
 </div>
 
-<script src="overlay.js?v=4"></script>
+<script src="langue.js?v=5"></script>
+<script src="overlay.js?v=5"></script>
 </body>
 </html>

@@ -4,46 +4,50 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talents — configuration</title>
-<link rel="stylesheet" href="panneaux.css?v=4">
+<link rel="stylesheet" href="panneaux.css?v=5">
 <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 <!-- Le ?v= force le navigateur à relire ce fichier quand il change : sans
      lui, une adresse d'EBS modifiée reste en cache et l'extension appelle
      l'ancienne, sans autre symptôme qu'un « injoignable ». À incrémenter à
      chaque modification de reglages.js. -->
-<script src="reglages.js?v=4"></script>
+<script src="reglages.js?v=5"></script>
 </head>
-<body>
 
-<h1>TALENTS</h1>
-<p class="sous-titre">Relie ton PC à ta chaîne, une fois pour toutes.</p>
+<!-- Cette page est vue par chaque diffuseur qui installe l'extension, pas
+     seulement par le sien : elle se traduit comme le reste. -->
+<body data-titre="titreConfig">
+
+<h1 data-t="talents">TALENTS</h1>
+<p class="sous-titre" data-t="configSousTitre">Relie ton PC à ta chaîne, une fois pour toutes.</p>
 
 <section>
-  <h2>Ce qu'il faut faire</h2>
-  <p>
+  <h2 data-t="configQuoi">Ce qu'il faut faire</h2>
+  <p data-t="configQuoiTexte">
     Lance le lecteur sur ton PC. Au premier démarrage, il te demandera le code
     ci-dessous : colle-le, et c'est fini — il s'en souviendra.
   </p>
-  <p class="detail">
+  <p class="detail" data-t="configQuoiDetail">
     Le jeton n'autorise qu'une seule chose : publier le tableau des talents sur
     ta chaîne. Il ne donne aucun accès à ton compte Twitch.
   </p>
 </section>
 
 <section>
-  <h2>Tes réglages</h2>
+  <h2 data-t="configReglages">Tes réglages</h2>
   <div class="champs">
     <div>
-      <label for="code">Ton code d'appairage</label>
+      <label for="code" data-t="configCode">Ton code d'appairage</label>
       <span class="valeur" id="code">…</span>
     </div>
     <div>
-      <label for="canal">Identifiant de chaîne</label>
+      <label for="canal" data-t="configCanal">Identifiant de chaîne</label>
       <span class="valeur" id="canal">…</span>
     </div>
   </div>
-  <p id="message" class="detail">Chargement…</p>
+  <p id="message" class="detail" data-t="chargement">Chargement…</p>
 </section>
 
-<script src="config.js?v=4"></script>
+<script src="langue.js?v=5"></script>
+<script src="config.js?v=5"></script>
 </body>
 </html>

@@ -17,6 +17,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
+const langue = require('./verifier-langue.js');
+
 const RACINE = path.join(__dirname, '..');
 const SOURCE = path.join(RACINE, 'extension');
 const ARCHIVE = path.join(RACINE, 'build', 'extension.zip');
@@ -73,6 +75,10 @@ function verifier() {
       }
     }
   }
+
+  /* L'extension porte ses deux langues dans le même paquet : une clé oubliée
+     ne se verrait qu'à l'écran d'un viewer, la version déjà figée. */
+  soucis.push(...langue.verifier().soucis);
 
   return { fichiers, soucis };
 }

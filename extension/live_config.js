@@ -4,6 +4,8 @@
    Une seule question, posée toutes les cinq secondes : est-ce que le lecteur
    envoie ? C'est ce qu'on veut voir d'un coup d'oeil en pleine partie, sans
    avoir à basculer sur une fenêtre de terminal.
+
+   Les textes viennent de langue.js, chargé juste avant ce script.
    ========================================================================= */
 'use strict';
 
@@ -28,22 +30,24 @@ window.Twitch.ext.onAuthorized((auth) => {
       });
 
       if (!reponse.ok) {
-        montrer(false, 'EBS injoignable', `Le serveur a répondu ${reponse.status}.`);
+        montrer(false, texteDe('directInjoignable'),
+          texteDe('directReponse', { code: reponse.status }));
         return;
       }
 
       const statut = await reponse.json();
       if (!statut.connecte) {
-        montrer(false, 'Lecteur arrêté',
-          statut.depuis ? `Dernier message il y a ${Math.round(statut.depuis / 1000)} s.` : '');
+        montrer(false, texteDe('directArrete'), statut.depuis
+          ? texteDe('directDernierMessage', { s: Math.round(statut.depuis / 1000) })
+          : '');
         return;
       }
 
-      montrer(true, 'Lecteur connecté', statut.joueurs
-        ? `Partie en cours à ${mmss(statut.seconde)}, ${statut.joueurs} joueurs suivis.`
-        : 'En attente d\'une partie.');
+      montrer(true, texteDe('directConnecte'), statut.joueurs
+        ? texteDe('directPartie', { temps: mmss(statut.seconde), n: statut.joueurs })
+        : texteDe('directAttente'));
     } catch (err) {
-      montrer(false, 'EBS injoignable', err.message);
+      montrer(false, texteDe('directInjoignable'), err.message);
     }
   };
 
