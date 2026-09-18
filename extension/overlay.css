@@ -41,13 +41,38 @@ html, body {
 }
 
 /* =========================================================================
+   LAISSER PASSER LES CLICS
+
+   En superposition, l'iframe de l'extension couvre toute la vidéo. Une page
+   transparente reçoit quand même les clics : sans cette règle, le viewer ne
+   pouvait plus mettre en pause ni cliquer nulle part sur l'image, alors que
+   l'extension n'affiche qu'un bouton dans un coin.
+
+   On rend donc la page inerte et on ne réactive que ce qui doit répondre.
+   Le panneau, lui, n'est pas au-dessus d'une vidéo : il garde ses clics.
+   ========================================================================= */
+
+body:not([data-mode="panneau"]) { pointer-events: none; }
+body:not([data-mode="panneau"]) .pastille,
+body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
+
+/* =========================================================================
    LE BOUTON — seul élément visible tant que le viewer n'ouvre rien
    ========================================================================= */
 
 .pastille {
   position: absolute;
   right: 22px;
-  bottom: 22px;
+
+  /* Twitch rend l'extension SOUS les contrôles de son lecteur, et prévient
+     que « les interactions avec ces éléments peuvent ne pas fonctionner ».
+     À 22 px du bas, le bouton tombait derrière la barre de contrôle — visible,
+     mais inerte : le clic partait à Twitch. On le remonte au-dessus.
+
+     La barre a une hauteur à peu près fixe en pixels, d'où le plancher ; le
+     pourcentage prend le relais sur les grands lecteurs, où elle est plus
+     haute et où sa zone de survol déborde davantage. */
+  bottom: max(84px, 14%);
   display: flex;
   align-items: center;
   gap: 10px;
