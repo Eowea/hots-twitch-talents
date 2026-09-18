@@ -222,7 +222,7 @@ function player(game, id) {
   if (!game.joueurs.has(id)) {
     game.joueurs.set(id, {
       joueur: id, equipe: null, battletag: null, heros: null, herosId: null,
-      niveau: 0, talents: [], humain: null, slot: null,
+      niveau: 0, talents: [], humain: null, slot: null, toon: null,
     });
   }
   return game.joueurs.get(id);
@@ -238,7 +238,13 @@ function apply(game, events) {
         break;
 
       case 'PlayerInit':
-        Object.assign(player(game, e.joueur), { equipe: e.entiers.Team });
+        /* Le ToonHandle identifie le compte Blizzard du joueur, et il a la
+           meme forme que le dossier de compte sur le disque — c'est ainsi que
+           le lecteur reconnait le streamer parmi les dix, et donc son equipe. */
+        Object.assign(player(game, e.joueur), {
+          equipe: e.entiers.Team,
+          toon: e.chaines.ToonHandle || null,
+        });
         break;
 
       case 'PlayerSpawned': {
@@ -298,6 +304,7 @@ function table(game) {
       battletag: p.battletag || null, // Renseigné par live.js, via le lobby.
       heros: p.heros,
       herosId: p.herosId,
+      toon: p.toon,
       niveau: p.niveau,
       talents: p.talents.map((t) => t.id),
     })),

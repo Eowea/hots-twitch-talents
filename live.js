@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const fsp = require('fs/promises');
+const os = require('os');
 const path = require('path');
 const bl = require('./battlelobby.js');
 const tracker = require('./tracker.js');
@@ -122,6 +123,99 @@ function watchGame(onUpdate, { intervalMs = 1000, onError = console.error } = {}
 }
 
 /* =========================================================================
+   RECONNAITRE LE DIFFUSEUR
+
+   Les dix joueurs se valent dans le fichier : rien n'y dit lequel tient la
+   souris. Mais PlayerInit porte le ToonHandle de chacun, et les comptes
+   installes sur ce PC sont des dossiers qui portent exactement cet
+   identifiant :
+
+     Documents/Heroes of the Storm/Accounts/<numero>/2-Hero-1-8537813/
+
+   Le joueur dont le ToonHandle y figure est donc celui qui diffuse. Le
+   tableau met alors son equipe a gauche et en bleu, comme le jeu la lui
+   montre : sans ca, une partie sur deux, le viewer verrait les couleurs
+   inversees par rapport a l'image qu'il a sous les yeux.
+
+   Seul le numero d'equipe quitte cette machine. Le ToonHandle, lui, reste
+   ici — c'est un identifiant de compte, y compris pour les neuf autres.
+   ========================================================================= */
+
+const MOTIF_TOON = /^\d+-[A-Za-z]+-\d+-\d+$/;
+
+/* Un PC peut avoir servi a plusieurs comptes — celui-ci en porte vingt-deux.
+   « N'importe quel compte local » designerait donc parfois un adversaire. On
+   les classe par la date du dossier de replays, qui change des qu'une partie
+   s'y ecrit : celui qui joue est celui qui en a produit un en dernier.
+
+   Relu toutes les minutes plutot qu'une fois pour toutes, pour qu'un
+   changement de joueur sur la meme machine soit suivi. */
+const FRAICHEUR_COMPTES = 60 * 1000;
+
+let comptes = null;
+let comptesLus = 0;
+
+function comptesDuPC() {
+  if (comptes && Date.now() - comptesLus < FRAICHEUR_COMPTES) return comptes;
+
+  const racine = path.join(os.homedir(), 'Documents', 'Heroes of the Storm', 'Accounts');
+  const trouves = [];
+
+  let dossiers = [];
+  try {
+    dossiers = fs.readdirSync(racine, { withFileTypes: true });
+  } catch {
+    comptes = []; comptesLus = Date.now();
+    return comptes; // Jeu installe ailleurs : on s'en passera.
+  }
+
+  for (const compte of dossiers) {
+    if (!compte.isDirectory()) continue;
+    let toons = [];
+    try {
+      toons = fs.readdirSync(path.join(racine, compte.name), { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const toon of toons) {
+      if (!toon.isDirectory() || !MOTIF_TOON.test(toon.name)) continue;
+
+      /* La date du dossier suffit : elle change quand un replay s'y ajoute.
+         Parcourir les 2 363 fichiers de l'un d'eux serait absurde. */
+      let date = 0;
+      for (const sous of ['Replays/Multiplayer', 'Replays']) {
+        try {
+          date = Math.max(date, fs.statSync(path.join(racine, compte.name, toon.name, sous)).mtimeMs);
+        } catch {
+          // Ce sous-dossier n'existe pas pour ce compte.
+        }
+      }
+      if (date) trouves.push({ toon: toon.name, date });
+    }
+  }
+
+  trouves.sort((a, b) => b.date - a.date);
+  comptes = trouves;
+  comptesLus = Date.now();
+  return comptes;
+}
+
+/* Rend 1 ou 2 — l'equipe du diffuseur — ou null si on ne l'a pas reconnu :
+   jeu installe ailleurs, compte tout neuf, ou partie observee. */
+function equipeDuDiffuseur(vue) {
+  const presents = new Map();
+  for (const j of vue.joueurs) if (j.toon) presents.set(j.toon, j.equipe);
+  if (!presents.size) return null;
+
+  // Le compte le plus recemment actif qui joue effectivement cette partie.
+  for (const { toon } of comptesDuPC()) {
+    if (presents.has(toon)) return presents.get(toon);
+  }
+  return null;
+}
+
+/* =========================================================================
    LA CHARGE UTILE
 
    Ce que le pont envoie a l'EBS, et que l'overlay recoit. Compacte a dessein :
@@ -142,6 +236,7 @@ function chargeUtile(vue, carte) {
     v: 1,
     t: vue.seconde,
     carte: carte || null,
+    m: equipeDuDiffuseur(vue), // L'equipe a mettre a gauche, ou null.
     bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
     j: vue.joueurs.map((j) => ({
       e: j.equipe,
@@ -153,7 +248,7 @@ function chargeUtile(vue, carte) {
   };
 }
 
-const CHARGE_VIDE = { v: 1, t: 0, carte: null, bans: [], j: [] };
+const CHARGE_VIDE = { v: 1, t: 0, carte: null, m: null, bans: [], j: [] };
 
 module.exports = {
   findTrackerFiles,
@@ -161,6 +256,8 @@ module.exports = {
   readBattletags,
   attachNames,
   chargeUtile,
+  equipeDuDiffuseur,
+  comptesDuPC,
   sansDiscriminant,
   CHARGE_VIDE,
   TRACKER_NAME,

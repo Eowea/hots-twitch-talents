@@ -45,6 +45,11 @@ const TEXTES = {
     bannis: 'BANNIS',
     equipeBleue: 'ÉQUIPE BLEUE',
     equipeRouge: 'ÉQUIPE ROUGE',
+    /* Quand le lecteur a reconnu le diffuseur, on nomme les équipes par
+       rapport à lui plutôt que par une couleur arbitraire : c'est ce que le
+       viewer a sous les yeux sur la vidéo. */
+    equipeAlliee: 'ÉQUIPE ALLIÉE',
+    equipeAdverse: 'ÉQUIPE ADVERSE',
     attente: "En attente d'une partie…",
     fermerTableau: 'Fermer le tableau',
     niveau: 'niveau {n}',
@@ -109,6 +114,8 @@ const TEXTES = {
     bannis: 'BANNED',
     equipeBleue: 'BLUE TEAM',
     equipeRouge: 'RED TEAM',
+    equipeAlliee: 'ALLIED TEAM',
+    equipeAdverse: 'ENEMY TEAM',
     attente: 'Waiting for a game…',
     fermerTableau: 'Close the panel',
     niveau: 'level {n}',

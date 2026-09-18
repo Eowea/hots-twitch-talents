@@ -141,13 +141,6 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 
 .titre { font-size: 18px; font-weight: 700; color: var(--or); letter-spacing: 0.1em; }
 .filet { width: 1px; height: 20px; background: rgba(240, 180, 41, 0.25); }
-.carte {
-  font-size: 16px;
-  color: var(--texte);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .chrono { font-size: 16px; color: var(--attenue); font-variant-numeric: tabular-nums; }
 .pousse { flex-grow: 1; }
 .bans-libelle { font-size: 12px; color: var(--sourd); letter-spacing: 0.1em; }
@@ -277,6 +270,19 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 
 .talents img.case { background: none; object-fit: cover; }
 
+/* Un talent connu mais sans image dans BUILDS : ses initiales, pour qu'on ne
+   le confonde pas avec un palier que le joueur n'a pas encore atteint. */
+.talents .case-nom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(240, 180, 41, 0.14);
+  color: var(--or);
+  font-size: calc(var(--icone) * 0.38);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 /* =========================================================================
    ETATS
    ========================================================================= */
@@ -394,7 +400,10 @@ body[data-mode="panneau"] {
 
 /* Le pseudo ne tient pas : on ne garde que le héros, qui est l'information
    que le viewer cherche dans un tableau de talents. */
-[data-mode="panneau"] .identite .tag { display: none; }
+/* Le pseudo tenait dans la superposition mais pas dans les 318 px du
+   panneau : il passe donc sous le nom du héros, sur sa propre ligne, ce qui
+   coûte de la hauteur plutôt que de la largeur. */
+[data-mode="panneau"] .identite .tag { font-size: 9px; line-height: 1.2; }
 [data-mode="panneau"] .identite .heros { font-size: 12px; }
 
 [data-mode="panneau"] .niveau-equipe { font-size: 11px; }

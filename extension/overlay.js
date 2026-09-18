@@ -96,6 +96,24 @@ const trouverHeros = (id) => table.heros[indexHeros.get(aplatir(id))] || null;
      nettement le suivant. Une icône fausse est pire qu'une case vide.
    ========================================================================= */
 
+/* Les noms internes que rien ne rattache au nom affiché.
+
+   « DetachableBoxMagazine » pour Active Reload, « POTG » pour Play of the
+   Game : aucun appariement, même tolérant, ne peut deviner ça. Chacune de ces
+   lignes a été établie par élimination sur 600 parties — dans un palier, un
+   identifiant jamais résolu face à un talent jamais choisi, c'est le même. */
+const NOMS_INTERNES = {
+  TyraelHeroicAbilityJudgement: 'Judgment', // Judgement / Judgment
+  MuradinExtraCharges: 'Mountain King',
+  AnaDetachableBoxMagazine: 'Active Reload',
+  KelThuzadFrozenTomb: 'Frost Blast',
+  ZagaraHeroicAbilityNydusAssault: 'Nydus Network',
+  MonkElevenSidedStrikeSevenSidedStrike: 'Transgression', // 7 coups -> 11
+  JainaFrigidTransmission: 'Ice Blink',
+  HanzoPOTG: 'Play of the Game',
+  XalatathFrozenMark: 'Cold Feet',
+};
+
 // Mots que Blizzard colle dans ses identifiants sans qu'ils nomment le talent.
 const BRUIT = new Set(['mastery', 'heroic', 'ability', 'talent', 'the', 'of', 'and']);
 
@@ -148,6 +166,13 @@ function trouverTalent(hero, identifiant, palier) {
   if (!hero) return null;
   const cle = aplatir(identifiant);
 
+  // Un nom interne connu tranche avant tout le reste.
+  const connu = NOMS_INTERNES[identifiant];
+  if (connu) {
+    const vise = hero.talents.find((t) => t.en === connu);
+    if (vise) return vise;
+  }
+
   const candidats = palier
     ? hero.talents.filter((talent) => talent.niveau === palier)
     : hero.talents;
@@ -194,14 +219,31 @@ const talentDeLaCase = new WeakMap();
 function creerCase(hero, identifiant, palier) {
   const talent = trouverTalent(hero, identifiant, palier);
 
-  if (!talent || !talent.icone) {
-    // Talent non traduit : une case pleine vaut mieux qu'un trou, et son
-    // identifiant brut reste lisible dans l'infobulle.
+  if (!talent) {
+    // Talent inconnu de la table : son identifiant brut reste lisible dans
+    // l'infobulle, faute de mieux.
     const vide = document.createElement('div');
     vide.className = 'case';
     vide.tabIndex = 0;
     talentDeLaCase.set(vide, { brut: identifiant });
     return vide;
+  }
+
+  if (!talent.icone) {
+    /* Connu, mais sans image dans BUILDS. Une case vide serait prise pour un
+       palier non atteint : on y met donc les initiales du talent, et
+       l'infobulle dit son nom comme pour les autres. */
+    const sansImage = document.createElement('div');
+    sansImage.className = 'case case-nom';
+    sansImage.tabIndex = 0;
+    sansImage.textContent = enLangue(talent)
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((mot) => mot[0].toUpperCase())
+      .join('');
+    talentDeLaCase.set(sansImage, talent);
+    return sansImage;
   }
 
   const img = document.createElement('img');
@@ -287,7 +329,6 @@ function afficher(etat) {
     return;
   }
 
-  $('#carte').textContent = etat.carte || '';
   /* Le repère est posé à l'affichage, pas à la réception : le tampon de
      retard a déjà décalé l'appel, donc cet instant est bien celui où le
      viewer voit cette seconde de jeu. */
@@ -307,8 +348,22 @@ function afficher(etat) {
     bans.append(img);
   }
 
-  for (const equipe of [1, 2]) {
-    const colonne = document.querySelector(`.colonne[data-equipe="${equipe}"]`);
+  /* Le jeu montre toujours au joueur sa propre équipe en bleu, à gauche,
+     quelle que soit l'équipe 1 ou 2 du fichier. Sans ce réordonnancement, une
+     partie sur deux, le viewer aurait vu les couleurs inversées par rapport à
+     l'image qu'il a sous les yeux. `m` porte l'équipe du diffuseur ; quand le
+     lecteur n'a pas su le reconnaître, on retombe sur bleue et rouge. */
+  const reconnu = etat.m === 1 || etat.m === 2;
+  const aGauche = etat.m === 2 ? 2 : 1;
+
+  const colonnes = [
+    { rang: 1, equipe: aGauche, titre: reconnu ? 'equipeAlliee' : 'equipeBleue' },
+    { rang: 2, equipe: aGauche === 1 ? 2 : 1, titre: reconnu ? 'equipeAdverse' : 'equipeRouge' },
+  ];
+
+  for (const { rang, equipe, titre } of colonnes) {
+    const colonne = document.querySelector(`.colonne[data-equipe="${rang}"]`);
+    colonne.querySelector('h2').textContent = texteDe(titre);
     const joueurs = etat.j.filter((j) => j.e === equipe);
 
     /* Le niveau est commun a toute l'equipe : le repeter sur chaque ligne
