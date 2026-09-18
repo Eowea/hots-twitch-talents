@@ -227,8 +227,26 @@ d'oeil.
 
 Trois choix de conception :
 
-- **La charge utile est compacte** (identifiants bruts, ~2,3 Ko pour dix
-  joueurs) parce que le PubSub de Twitch plafonne à 5 Ko par message. C'est
+- **Le chrono avance tout seul chez le viewer.** La charge utile porte `t`,
+  la seconde de jeu, qui changeait à chaque seconde : le dédoublonnage de
+  `pont.js` ne s'activait donc jamais et le lecteur envoyait au plafond de
+  deux secondes toute la partie, alors qu'il n'y a que 70 changements de
+  talent en vingt minutes. `pont.js` compare maintenant tout **sauf** le
+  chrono, et `overlay.js` fait avancer l'horloge entre deux messages, en se
+  recalant à chaque rappel. Mesuré sur douze parties, 175 minutes de jeu :
+
+  | | avant | après |
+  |---|---|---|
+  | envois par minute de partie | 25,6 | **8,9** |
+  | envois par partie | 375 | **130** |
+
+  Soit ~60 diffuseurs actifs sur le palier gratuit de Cloudflare
+  (100 000 requêtes/jour) au lieu de ~20. Les viewers ne coûtent rien : ils
+  reçoivent le PubSub de Twitch, qui ne touche pas le service. Passé 30 s sans
+  message, l'extension **fige** le chrono plutôt que de le laisser courir
+  seul : le lecteur du streamer s'est arrêté, et le tableau doit le montrer.
+- **La charge utile est compacte** (identifiants bruts, ~2,7 Ko au pire pour
+  dix joueurs) parce que le PubSub de Twitch plafonne à 5 Ko par message. C'est
   l'overlay qui traduit, avec `extension/talents.json`.
 - **Les images viennent de EOWEA BUILDS** (`eowea.github.io/builds`), pas d'une
   copie : une seule source de vérité, et elles suivent tes mises à jour. Il

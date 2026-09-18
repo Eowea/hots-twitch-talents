@@ -20,6 +20,11 @@ const LARGEUR_ETROITE = 560; // Une seule équipe, sur un petit lecteur.
 const SEUIL_ETROIT = 0.62; // En deçà, les icônes deviennent illisibles.
 const PALIERS = [1, 4, 7, 10, 13, 16, 20];
 
+/* Trois rappels manqués : le lecteur du streamer s'est arrêté. On fige alors
+   le chrono, parce qu'une horloge qui continue toute seule pendant que le
+   tableau ne bouge plus donnerait l'illusion d'une partie encore suivie. */
+const CHRONO_PERIME = 30000;
+
 const $ = (sel) => document.querySelector(sel);
 const aplatir = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 
@@ -152,15 +157,46 @@ function creerLigne(joueur) {
   return ligne;
 }
 
+/* =========================================================================
+   LE CHRONO
+
+   Le lecteur n'envoie plus un message par seconde : il ne parle que quand
+   quelque chose change à l'écran, et se rappelle toutes les dix secondes.
+   C'est donc ici qu'on fait avancer l'horloge, depuis le dernier repère reçu
+   — ce qui divise par trois le trafic vers le service sans que le viewer
+   voie la moindre différence.
+   ========================================================================= */
+
+let chronoBase = null; // { seconde, depuis }
+
+function ecrireChrono(secondes) {
+  const s = Math.max(0, Math.round(secondes));
+  $('#chrono').textContent = `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`;
+}
+
+function avancerChrono() {
+  if (!chronoBase) return;
+  const ecoule = Date.now() - chronoBase.depuis;
+  if (ecoule > CHRONO_PERIME) return; // Plus de lecteur : on fige où on est.
+  ecrireChrono(chronoBase.seconde + ecoule / 1000);
+}
+
 function afficher(etat) {
   dernierEtat = etat;
-  cadre.classList.toggle('partie', Boolean(etat && etat.j && etat.j.length));
-  if (!etat || !etat.j || !etat.j.length) return;
-
+  const enPartie = Boolean(etat && etat.j && etat.j.length);
+  cadre.classList.toggle('partie', enPartie);
+  if (!enPartie) {
+    chronoBase = null;
+    $('#chrono').textContent = '';
+    return;
+  }
 
   $('#carte').textContent = etat.carte || '';
-  const s = Math.max(0, Math.round(etat.t || 0));
-  $('#chrono').textContent = `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`;
+  /* Le repère est posé à l'affichage, pas à la réception : le tampon de
+     retard a déjà décalé l'appel, donc cet instant est bien celui où le
+     viewer voit cette seconde de jeu. */
+  chronoBase = { seconde: etat.t || 0, depuis: Date.now() };
+  avancerChrono();
 
   const bans = $('#bans');
   bans.replaceChildren();
@@ -474,6 +510,7 @@ chargerTable().then(() => {
   }
 
   brancherInfobulle();
+  setInterval(avancerChrono, 1000);
   ajuster();
 
   if (window.Twitch && window.Twitch.ext) {
