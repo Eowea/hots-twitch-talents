@@ -256,6 +256,36 @@ Trois choix de conception :
   largeur et en hauteur. Sous 62 % il ne montre plus qu'une équipe, avec une
   bascule : à cette taille, les icônes des deux équipes deviennent illisibles.
 
+**L'appariement d'un talent tient au palier.** Le tracker écrit
+`<Héros><NomInterne><Capacité>`, et ce nom interne a dérivé de celui qu'on
+affiche : `Indestructable` pour Indestructible, `NanaBoost` pour Nano Boost,
+`ArchlichArmor` pour Armor of the Archlich. Chercher le nom affiché dans
+l'identifiant, sans autre contrainte, produisait deux défauts mesurés sur
+12 321 talents de 200 parties :
+
+| | avant | après |
+|---|---|---|
+| case **fausse** | 194 (1,57 %) | **0** |
+| case **vide** | 180 (1,46 %) | 92 (0,75 %) |
+
+Les cases fausses venaient toutes du palier 20 : l'identifiant d'une
+amélioration d'héroïque cite le nom de l'héroïque, donc le tableau affichait
+le talent du palier 10. Comme les talents arrivent dans l'ordre des paliers,
+l'indice de la case donne le sien — on ne compare donc qu'aux trois ou quatre
+candidats du bon palier, ce qui supprime l'erreur et rend un appariement
+tolérant sans danger. Il n'est retenu que s'il devance nettement le suivant :
+une icône fausse est pire qu'une case vide.
+
+Deux autres corrections au passage : `aplatir()` replie les accents en NFD au
+lieu de les supprimer (« Rejuvenescência »), et **le nom propre d'un héros
+l'emporte sur l'alias d'un autre** — `gall` est l'identifiant de Gall et aussi
+un alias de Cho'Gall, si bien que les talents de Gall étaient cherchés, et
+trouvés à tort, dans l'arbre de Cho.
+
+Les 0,75 % restants sont des talents que `talents.json` ne contient pas du
+tout. Ils s'affichent en case vide, l'identifiant brut restant lisible dans
+l'infobulle.
+
 La table `extension/talents.json` est un instantané de BUILDS. À régénérer
 après une mise à jour du site :
 

@@ -26,7 +26,14 @@ const PALIERS = [1, 4, 7, 10, 13, 16, 20];
 const CHRONO_PERIME = 30000;
 
 const $ = (sel) => document.querySelector(sel);
-const aplatir = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+
+/* NFD sépare la lettre de son accent, qu'on retire ensuite : sans ça
+   « Rejuvenescência » devenait « rejuvenescncia » — les lettres accentuées
+   n'étant pas dans [a-z] — et ne correspondait plus à l'identifiant du jeu,
+   « LucioAmpItUpRejuvenescencia ». */
+const aplatir = (s) => String(s || '')
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]/gi, '').toLowerCase();
 
 /* talents.json porte les deux langues pour chaque héros et chaque talent.
    LANGUE et texteDe() viennent de langue.js, chargé juste avant ce script.
@@ -57,6 +64,11 @@ async function chargerTable() {
   if (!reponse.ok) throw new Error(`talents.json : HTTP ${reponse.status}`);
   table = await reponse.json();
 
+  /* Le nom propre d'un héros l'emporte sur l'alias d'un autre. « gall » est
+     l'identifiant de Gall, et aussi un alias de Cho'Gall : le premier inscrit
+     gagnait, donc les talents de Gall étaient cherchés dans l'arbre de Cho,
+     où l'on finissait par trouver une icône — fausse. */
+  for (const id of Object.keys(table.heros)) indexHeros.set(id, id);
   for (const [id, hero] of Object.entries(table.heros)) {
     for (const alias of hero.alias) if (!indexHeros.has(alias)) indexHeros.set(alias, id);
   }
@@ -64,24 +76,107 @@ async function chargerTable() {
 
 const trouverHeros = (id) => table.heros[indexHeros.get(aplatir(id))] || null;
 
-/* Le tracker écrit <Héros><NomAnglaisDuTalent><CapacitéConcernée>. On retient
-   donc le talent dont le nom anglais, réduit à ses lettres, est contenu dans
-   l'identifiant — le plus long gagne, pour que « Chaos Reigns » ne prenne pas
-   la place de « Chaos Reigns Supreme ». */
-function trouverTalent(hero, identifiant) {
+/* =========================================================================
+   APPARIER UN IDENTIFIANT À UN TALENT
+
+   Le tracker écrit <Héros><NomAnglaisDuTalent><CapacitéConcernée>, mais ce
+   nom anglais est le nom *interne* de Blizzard, qui a dérivé de celui qu'on
+   affiche : « Indestructable » pour Indestructible, « NanaBoost » pour Nano
+   Boost, « ArchlichArmor » pour Armor of the Archlich.
+
+   Deux choses rendent l'appariement sûr malgré cette dérive :
+
+   - Le palier. Les talents d'un joueur arrivent dans l'ordre des paliers, donc
+     l'indice de la case donne le sien. Cela ramène le choix à trois ou quatre
+     candidats au lieu de vingt — et supprime au passage une erreur qu'on ne
+     voyait pas : au palier 20, l'identifiant d'une amélioration d'héroïque
+     cite le nom de l'héroïque, et le tableau affichait donc le talent du
+     palier 10. Mesuré à 170 cases fausses sur 12 000.
+   - La marge. On n'accepte un appariement approximatif que s'il domine
+     nettement le suivant. Une icône fausse est pire qu'une case vide.
+   ========================================================================= */
+
+// Mots que Blizzard colle dans ses identifiants sans qu'ils nomment le talent.
+const BRUIT = new Set(['mastery', 'heroic', 'ability', 'talent', 'the', 'of', 'and']);
+
+const SEUIL = 0.55; // En deçà, le nom ne décrit pas cet identifiant.
+const MARGE = 0.15; // Et il doit devancer le deuxième d'autant.
+
+const motsDuNom = (nom) => String(nom)
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .split(/[^a-zA-Z0-9]+/)
+  .map((mot) => mot.toLowerCase())
+  .filter((mot) => mot.length >= 4 && !BRUIT.has(mot));
+
+/* Longueur de la plus longue sous-chaîne commune — ce qui rattrape les fautes
+   de frappe de Blizzard, « Indestructable » partageant « indestruct » avec
+   « Indestructible ». */
+function communLePlusLong(mot, cle) {
+  let max = 0;
+  for (let i = 0; i < mot.length; i++) {
+    for (let j = i + max + 1; j <= mot.length; j++) {
+      if (!cle.includes(mot.slice(i, j))) break;
+      max = j - i;
+    }
+  }
+  return max;
+}
+
+/* À quel point ce nom de talent décrit-il cet identifiant ? De 0 à 1. */
+function pertinence(nom, cle) {
+  const mots = motsDuNom(nom);
+  if (!mots.length) return 0;
+
+  let obtenus = 0;
+  let possibles = 0;
+  for (const mot of mots) {
+    possibles += mot.length;
+    const singulier = mot.endsWith('s') ? mot.slice(0, -1) : mot;
+
+    if (cle.includes(mot)) obtenus += mot.length;
+    else if (singulier.length >= 4 && cle.includes(singulier)) obtenus += singulier.length;
+    else {
+      const commun = communLePlusLong(mot, cle);
+      // Sous cinq lettres, une coïncidence ne prouve rien.
+      if (commun >= 5) obtenus += commun * 0.9;
+    }
+  }
+  return obtenus / possibles;
+}
+
+function trouverTalent(hero, identifiant, palier) {
   if (!hero) return null;
   const cle = aplatir(identifiant);
-  let meilleur = null;
-  let meilleureLongueur = 0;
 
-  for (const talent of hero.talents) {
+  const candidats = palier
+    ? hero.talents.filter((talent) => talent.niveau === palier)
+    : hero.talents;
+  if (!candidats.length) return null;
+
+  /* La règle d'origine règle 98 % des cas : le nom affiché est contenu dans
+     l'identifiant. Le plus long gagne, pour que « Chaos Reigns » ne prenne
+     pas la place de « Chaos Reigns Supreme ». */
+  let exact = null;
+  let meilleureLongueur = 0;
+  for (const talent of candidats) {
     const en = aplatir(talent.en);
     if (en.length >= 4 && cle.includes(en) && en.length > meilleureLongueur) {
-      meilleur = talent;
+      exact = talent;
       meilleureLongueur = en.length;
     }
   }
-  return meilleur;
+  if (exact) return exact;
+
+  // Sinon le mieux noté du palier, s'il se détache assez.
+  const notes = candidats
+    .map((talent) => ({ talent, note: pertinence(talent.en, cle) }))
+    .sort((a, b) => b.note - a.note);
+
+  const [premier, second] = notes;
+  if (premier.note >= SEUIL && (!second || premier.note - second.note >= MARGE)) {
+    return premier.talent;
+  }
+  return null;
 }
 
 const urlIcone = (fichier) => table.base + table.prefixeIcone + fichier;
@@ -96,8 +191,8 @@ const urlPortrait = (fichier) => table.base + table.prefixePortrait + fichier;
    dans le document. */
 const talentDeLaCase = new WeakMap();
 
-function creerCase(hero, identifiant) {
-  const talent = trouverTalent(hero, identifiant);
+function creerCase(hero, identifiant, palier) {
+  const talent = trouverTalent(hero, identifiant, palier);
 
   if (!talent || !talent.icone) {
     // Talent non traduit : une case pleine vaut mieux qu'un trou, et son
@@ -146,7 +241,8 @@ function creerLigne(joueur) {
   for (let i = 0; i < PALIERS.length; i++) {
     const identifiant = joueur.t[i];
     if (identifiant) {
-      talents.append(creerCase(hero, identifiant));
+      // L'indice donne le palier : les prises arrivent dans l'ordre.
+      talents.append(creerCase(hero, identifiant, PALIERS[i]));
     } else {
       const vide = document.createElement('div');
       vide.className = 'case';

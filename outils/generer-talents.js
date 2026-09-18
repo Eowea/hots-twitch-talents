@@ -50,8 +50,11 @@ const aplatir = (s) => String(s || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
 const JETONS_PAR_NOM = new Map();
 for (const [jetons, nom] of HERO_TOKENS) JETONS_PAR_NOM.set(aplatir(nom), jetons);
 
-// Cho'gall est un seul heros dans BUILDS, deux joueurs dans le jeu.
-const ALIAS_MANUELS = { chogall: ['cho', 'gall', 'chogall'] };
+/* Cho'gall est deux joueurs dans le jeu, et BUILDS a bien deux entrees :
+   « chogall » pour Cho, « gall » pour Gall. Donner « gall » a Cho revenait
+   donc a voler son nom a Gall — l'overlay cherchait alors les talents de Gall
+   dans l'arbre de Cho, et y trouvait une icone fausse. */
+const ALIAS_MANUELS = { chogall: ['cho', 'chogall'] };
 
 function aliasDe(h) {
   const liste = [h.id, h.name.en, h.name.fr, ...(ALIAS_MANUELS[h.id] || [])];
