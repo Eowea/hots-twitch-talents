@@ -1,0 +1,180 @@
+/* =========================================================================
+   PAGES LÉGALES — habillage
+
+   Mêmes couleurs que l'extension, mais pensées pour la lecture : une colonne
+   étroite, un corps de texte confortable, et aucune police externe à charger.
+   Ces pages doivent s'ouvrir vite et rester lisibles partout — un examinateur
+   de Twitch les consultera peut-être sur un téléphone.
+   ========================================================================= */
+
+:root {
+  --profond: #0d0a26;
+  --carte: #151138;
+  --or: #f0b429;
+  --or-vif: #ffd873;
+  --texte: #e0e6ed;
+  --attenue: #9aa5b5;
+  --sourd: #6b7a90;
+  --filet: rgba(240, 180, 41, 0.22);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--profond);
+  color: var(--texte);
+  font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+/* =========================================================================
+   EN-TÊTE ET PIED
+   ========================================================================= */
+
+.entete {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--filet);
+  background: linear-gradient(180deg, rgba(240, 180, 41, 0.06), transparent);
+}
+
+.marque {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--or);
+  text-decoration: none;
+}
+
+.bascule { display: flex; gap: 8px; margin-left: auto; }
+
+.bascule a {
+  padding: 5px 13px;
+  border: 1px solid rgba(226, 216, 255, 0.2);
+  border-radius: 5px;
+  color: var(--attenue);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.bascule a:hover { border-color: var(--or); color: var(--or-vif); }
+
+.bascule a[aria-current="true"] {
+  border-color: var(--or);
+  background: rgba(240, 180, 41, 0.13);
+  color: var(--or);
+}
+
+.pied {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 26px 24px 40px;
+  border-top: 1px solid rgba(226, 216, 255, 0.08);
+  color: var(--sourd);
+  font-size: 14px;
+}
+
+/* =========================================================================
+   LE TEXTE
+   ========================================================================= */
+
+main { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+h1 {
+  margin: 44px 0 6px;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--or);
+}
+
+.date {
+  margin: 0 0 30px;
+  color: var(--sourd);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+}
+
+h2 {
+  margin: 38px 0 10px;
+  font-size: 19px;
+  color: var(--or-vif);
+}
+
+p { margin: 0 0 15px; }
+
+/* Le paragraphe d'ouverture, un peu plus grand : il dit l'essentiel à qui ne
+   lira pas le reste — et beaucoup ne liront pas le reste. */
+.chapeau {
+  padding: 16px 20px;
+  border-left: 3px solid var(--or);
+  background: var(--carte);
+  border-radius: 0 6px 6px 0;
+  font-size: 18px;
+}
+
+ul { margin: 0 0 15px; padding-left: 22px; }
+li { margin-bottom: 7px; }
+
+/* Le résumé en tête : ce qu'on veut que le lecteur retienne. */
+.resume {
+  padding: 16px 20px 16px 40px;
+  background: var(--carte);
+  border: 1px solid var(--filet);
+  border-radius: 6px;
+}
+
+.resume li { margin-bottom: 9px; }
+.resume li:last-child { margin-bottom: 0; }
+
+/* La ligne de contact : on la cherche, elle doit se voir. */
+.contact {
+  padding: 12px 16px;
+  border: 1px solid var(--filet);
+  border-radius: 6px;
+  background: rgba(240, 180, 41, 0.07);
+}
+
+strong { color: #fff; }
+em { color: var(--attenue); font-style: italic; }
+
+code {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(226, 216, 255, 0.09);
+  font-family: 'Cascadia Mono', Consolas, monospace;
+  font-size: 0.9em;
+}
+
+a { color: var(--or); text-decoration-color: var(--filet); }
+a:hover { color: var(--or-vif); }
+
+/* =========================================================================
+   PETITS ÉCRANS
+   ========================================================================= */
+
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  main { padding: 0 18px; }
+  h1 { font-size: 25px; margin-top: 32px; }
+  h2 { font-size: 18px; }
+  .entete { padding: 14px 18px; }
+  .bascule { margin-left: 0; width: 100%; }
+}
+
+/* Une page légale finit souvent imprimée ou enregistrée en PDF. */
+@media print {
+  body { background: #fff; color: #000; font-size: 11pt; }
+  .entete, .pied, .bascule { display: none; }
+  h1, h2 { color: #000; }
+  .chapeau, .resume, .contact { border: 1px solid #999; background: none; }
+  strong { color: #000; }
+  a { color: #000; }
+  a::after { content: " (" attr(href) ")"; font-size: 0.85em; color: #555; }
+}

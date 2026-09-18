@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Talents — Politique de confidentialité / Privacy Policy</title>
+<meta name="description" content="Ce que l'extension Twitch Talents pour Heroes of the Storm transmet, et ce qu'elle ne transmet pas.">
+<link rel="stylesheet" href="legal.css">
+</head>
+<body>
+
+<header class="entete">
+  <a class="marque" href="./">TALENTS</a>
+  <nav class="bascule" aria-label="Langue">
+    <a href="#fr" data-vers="fr">Français</a>
+    <a href="#en" data-vers="en">English</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ===================================================================== -->
+<article lang="fr" data-langue="fr">
+
+<h1>Politique de confidentialité</h1>
+<p class="date">En vigueur le 18 septembre 2026</p>
+
+<p class="chapeau">
+  Talents est une extension Twitch qui affiche, pendant une partie de
+  <em>Heroes of the Storm</em>, les talents choisis par les dix joueurs. Cette
+  page décrit exactement ce qu'elle lit, ce qu'elle transmet, et ce qu'elle ne
+  conserve pas.
+</p>
+
+<h2>En bref</h2>
+<ul class="resume">
+  <li>L'extension <strong>ne dépose aucun cookie</strong> et n'écrit rien dans le navigateur du spectateur.</li>
+  <li>Elle <strong>ne lit pas l'identité</strong> des spectateurs et n'en fait aucune statistique.</li>
+  <li>Le service qui relaie les données <strong>n'a ni base de données ni historique</strong> : un message est transmis puis oublié.</li>
+  <li>Le <strong>discriminant du battletag est retiré</strong> sur l'ordinateur du diffuseur, avant que quoi que ce soit ne parte.</li>
+</ul>
+
+<h2>Qui publie l'extension</h2>
+<p>
+  Talents est publiée par Eowea, diffuseur sur
+  <a href="https://www.twitch.tv/eowea">twitch.tv/eowea</a>. Le code est
+  ouvert et consultable : <a href="https://github.com/Eowea/hots-twitch-talents">github.com/Eowea/hots-twitch-talents</a>.
+</p>
+<p class="contact">
+  Contact : <a href="mailto:eowea.contact@gmail.com">eowea.contact@gmail.com</a>
+</p>
+
+<h2>Quelles données sont affichées</h2>
+<p>
+  Pendant une partie, l'extension montre, pour chacun des dix joueurs :
+</p>
+<ul>
+  <li>son <strong>héros</strong> et les <strong>talents</strong> qu'il a pris ;</li>
+  <li>le <strong>niveau de son équipe</strong> et son <strong>équipe</strong> ;</li>
+  <li>son <strong>pseudo en jeu, privé de son discriminant</strong> — « Eowea#21654 » devient « Eowea » ;</li>
+  <li>les héros <strong>bannis</strong>, et le temps écoulé.</li>
+</ul>
+<p>
+  Ces informations sont déjà visibles à l'écran du diffuseur pendant qu'il
+  joue. L'extension les met en forme ; elle ne révèle rien qui ne soit
+  montré par ailleurs.
+</p>
+
+<h2>D'où elles viennent</h2>
+<p>
+  Le diffuseur lance sur son ordinateur un petit programme, le
+  <strong>lecteur</strong>. Pendant une partie, <em>Heroes of the Storm</em>
+  écrit un fichier de suivi dans le dossier temporaire de Windows ; le lecteur
+  le lit, en extrait ce qui précède, et l'envoie. Il ne modifie pas le jeu, ne
+  s'y injecte pas et ne lit rien d'autre.
+</p>
+<p>
+  Le lecteur consulte aussi les noms des dossiers de compte du jeu, sur cet
+  ordinateur, pour reconnaître lequel des dix joueurs est le diffuseur — c'est
+  ce qui permet d'afficher son équipe à gauche, comme le jeu la lui montre.
+  <strong>Cet identifiant de compte ne quitte jamais la machine</strong> :
+  seul le numéro d'équipe, 1 ou 2, est transmis.
+</p>
+
+<h2>Ce qui est transmis, exactement</h2>
+<p>
+  Le lecteur envoie un message compact à un service de relais, qui le fait
+  suivre au système de diffusion de Twitch, lequel l'apporte aux spectateurs.
+  Le message contient, et rien d'autre :
+</p>
+<ul>
+  <li>le temps de jeu écoulé, en secondes ;</li>
+  <li>l'équipe du diffuseur (1 ou 2) ;</li>
+  <li>la liste des héros bannis ;</li>
+  <li>pour chaque joueur : son équipe, son pseudo sans discriminant, son héros,
+    le niveau de son équipe et la liste de ses talents.</li>
+</ul>
+<p>
+  Ne sont transmis <strong>ni le discriminant du battletag, ni l'identifiant
+  de compte Blizzard, ni aucune donnée relative aux spectateurs</strong>.
+</p>
+
+<h2>Ce qui n'est pas collecté</h2>
+<ul>
+  <li><strong>Aucun cookie</strong>, aucun stockage local, aucune empreinte de navigateur.</li>
+  <li><strong>Aucune identité de spectateur</strong> : l'extension ne demande pas
+    l'identité Twitch de qui la regarde et n'en reçoit aucune.</li>
+  <li><strong>Aucune mesure d'audience</strong>, aucun traceur publicitaire,
+    aucun outil d'analyse.</li>
+</ul>
+
+<h2>Combien de temps les données sont conservées</h2>
+<p>
+  <strong>Elles ne le sont pas.</strong> Le service de relais est sans état :
+  il n'a ni base de données, ni fichier, ni journal du contenu des messages. Il
+  vérifie qu'un message vient bien du diffuseur qu'il prétend, le transmet à
+  Twitch, et l'oublie. Rien n'est rejoué : un spectateur qui ouvre le tableau
+  voit l'état courant, transmis à nouveau par le lecteur, et rien du passé.
+</p>
+<p>
+  Quand la partie s'arrête, le lecteur cesse d'émettre. Le tableau disparaît de
+  lui-même.
+</p>
+
+<h2>Les autres joueurs de la partie</h2>
+<p>
+  Neuf des dix joueurs affichés n'ont rien demandé. Trois précautions les
+  concernent :
+</p>
+<ul>
+  <li>leur <strong>discriminant est retiré à la source</strong>, sur
+    l'ordinateur du diffuseur, avant tout envoi : l'identifiant unique qui
+    permettrait de les retrouver ne quitte pas cette machine ;</li>
+  <li>rien n'est conservé, donc rien ne s'accumule d'une partie à l'autre ;</li>
+  <li>ce qui est montré est ce que la diffusion montre déjà.</li>
+</ul>
+<p>
+  Comme aucune donnée n'est enregistrée, il n'y a rien à rectifier ni à
+  effacer. Une demande concernant une diffusion précise relève de la chaîne
+  concernée ou de Twitch.
+</p>
+
+<h2>Services tiers</h2>
+<p>
+  En affichant l'extension, le navigateur du spectateur contacte :
+</p>
+<ul>
+  <li><strong>Twitch</strong>, qui héberge l'extension et achemine les messages.
+    La <a href="https://www.twitch.tv/p/legal/privacy-notice/">politique de
+    confidentialité de Twitch</a> s'applique.</li>
+  <li><strong>GitHub Pages</strong> (<code>eowea.github.io</code>), d'où
+    proviennent les icônes des talents. GitHub voit donc l'adresse IP du
+    spectateur, comme pour n'importe quelle image d'un site web.</li>
+</ul>
+<p>
+  Le service de relais, hébergé chez <strong>Cloudflare</strong>, n'est appelé
+  que par le lecteur du diffuseur et par les pages de configuration de
+  l'extension — <strong>jamais par le navigateur d'un spectateur</strong>.
+</p>
+
+<h2>Sécurité</h2>
+<p>
+  Le lecteur s'authentifie auprès du service avec un jeton propre à la chaîne,
+  que la page de configuration de l'extension affiche au diffuseur. Ce jeton
+  n'autorise qu'une chose : publier le tableau des talents sur cette
+  chaîne-là. Il ne donne aucun accès au compte Twitch et se révoque en
+  régénérant un nouveau code.
+</p>
+
+<h2>Modifications</h2>
+<p>
+  Cette page peut évoluer avec l'extension. La date en tête indique la dernière
+  version. L'historique complet des changements est public dans le dépôt de
+  code.
+</p>
+
+</article>
+
+<!-- ===================================================================== -->
+<article lang="en" data-langue="en" hidden>
+
+<h1>Privacy Policy</h1>
+<p class="date">Effective 18 September 2026</p>
+
+<p class="chapeau">
+  Talents is a Twitch extension that shows, during a
+  <em>Heroes of the Storm</em> match, the talents chosen by all ten players.
+  This page describes exactly what it reads, what it transmits, and what it
+  does not keep.
+</p>
+
+<h2>In short</h2>
+<ul class="resume">
+  <li>The extension <strong>sets no cookies</strong> and writes nothing to the viewer's browser.</li>
+  <li>It <strong>does not read viewer identity</strong> and collects no statistics about viewers.</li>
+  <li>The relay service has <strong>no database and no history</strong>: a message is passed on, then forgotten.</li>
+  <li>The <strong>battletag discriminator is stripped</strong> on the broadcaster's computer, before anything leaves it.</li>
+</ul>
+
+<h2>Who publishes the extension</h2>
+<p>
+  Talents is published by Eowea, a broadcaster at
+  <a href="https://www.twitch.tv/eowea">twitch.tv/eowea</a>. The source code is
+  open: <a href="https://github.com/Eowea/hots-twitch-talents">github.com/Eowea/hots-twitch-talents</a>.
+</p>
+<p class="contact">
+  Contact: <a href="mailto:eowea.contact@gmail.com">eowea.contact@gmail.com</a>
+</p>
+
+<h2>What is displayed</h2>
+<p>During a match, the extension shows, for each of the ten players:</p>
+<ul>
+  <li>their <strong>hero</strong> and the <strong>talents</strong> they picked;</li>
+  <li>their <strong>team</strong> and their <strong>team level</strong>;</li>
+  <li>their <strong>in-game nickname, without its discriminator</strong> — "Eowea#21654" becomes "Eowea";</li>
+  <li><strong>banned</strong> heroes, and the elapsed time.</li>
+</ul>
+<p>
+  All of this is already on the broadcaster's screen while they play. The
+  extension lays it out; it reveals nothing that is not shown anyway.
+</p>
+
+<h2>Where it comes from</h2>
+<p>
+  The broadcaster runs a small program on their computer, the
+  <strong>reader</strong>. During a match, <em>Heroes of the Storm</em> writes a
+  tracking file into the Windows temporary folder; the reader reads it,
+  extracts the above, and sends it. It does not modify the game, does not inject
+  into it, and reads nothing else.
+</p>
+<p>
+  The reader also looks at the names of the game's account folders on that
+  computer, to work out which of the ten players is the broadcaster — that is
+  what puts their team on the left, the way the game shows it to them.
+  <strong>This account identifier never leaves the machine</strong>: only the
+  team number, 1 or 2, is transmitted.
+</p>
+
+<h2>Exactly what is transmitted</h2>
+<p>
+  The reader sends a compact message to a relay service, which forwards it to
+  Twitch's broadcast system, which delivers it to viewers. The message contains
+  this and nothing else:
+</p>
+<ul>
+  <li>elapsed game time, in seconds;</li>
+  <li>the broadcaster's team (1 or 2);</li>
+  <li>the list of banned heroes;</li>
+  <li>for each player: their team, their nickname without discriminator, their
+    hero, their team level and their list of talents.</li>
+</ul>
+<p>
+  <strong>Neither the battletag discriminator, nor any Blizzard account
+  identifier, nor any viewer data</strong> is transmitted.
+</p>
+
+<h2>What is not collected</h2>
+<ul>
+  <li><strong>No cookies</strong>, no local storage, no browser fingerprinting.</li>
+  <li><strong>No viewer identity</strong>: the extension does not request the
+    Twitch identity of whoever is watching, and receives none.</li>
+  <li><strong>No analytics</strong>, no advertising trackers, no measurement tools.</li>
+</ul>
+
+<h2>How long data is kept</h2>
+<p>
+  <strong>It is not.</strong> The relay service is stateless: no database, no
+  file, no log of message contents. It checks that a message really comes from
+  the channel it claims, forwards it to Twitch, and forgets it. Nothing is
+  replayed: a viewer opening the panel sees the current state, sent again by the
+  reader, and nothing of the past.
+</p>
+<p>
+  When the match ends, the reader stops sending. The panel clears by itself.
+</p>
+
+<h2>The other players in the match</h2>
+<p>
+  Nine of the ten players displayed never asked for this. Three safeguards
+  apply to them:
+</p>
+<ul>
+  <li>their <strong>discriminator is stripped at the source</strong>, on the
+    broadcaster's computer, before anything is sent: the unique identifier that
+    would allow them to be looked up never leaves that machine;</li>
+  <li>nothing is stored, so nothing accumulates from one match to the next;</li>
+  <li>what is shown is what the stream already shows.</li>
+</ul>
+<p>
+  Since no data is recorded, there is nothing to correct or erase. A request
+  about a specific broadcast is a matter for that channel or for Twitch.
+</p>
+
+<h2>Third-party services</h2>
+<p>When displaying the extension, the viewer's browser contacts:</p>
+<ul>
+  <li><strong>Twitch</strong>, which hosts the extension and carries the
+    messages. <a href="https://www.twitch.tv/p/legal/privacy-notice/">Twitch's
+    privacy notice</a> applies.</li>
+  <li><strong>GitHub Pages</strong> (<code>eowea.github.io</code>), which serves
+    the talent icons. GitHub therefore sees the viewer's IP address, as it would
+    for any image on any website.</li>
+</ul>
+<p>
+  The relay service, hosted on <strong>Cloudflare</strong>, is called only by the
+  broadcaster's reader and by the extension's configuration pages —
+  <strong>never by a viewer's browser</strong>.
+</p>
+
+<h2>Security</h2>
+<p>
+  The reader authenticates to the service with a token specific to the channel,
+  shown to the broadcaster on the extension's configuration page. That token
+  allows exactly one thing: publishing the talent panel on that channel. It
+  grants no access to the Twitch account, and is revoked by generating a new
+  code.
+</p>
+
+<h2>Changes</h2>
+<p>
+  This page may change along with the extension. The date at the top marks the
+  latest version. The full history of changes is public in the code repository.
+</p>
+
+</article>
+
+</main>
+
+<footer class="pied">
+  <a href="terms.html">Conditions d'utilisation · Terms of Use</a>
+  <span>·</span>
+  <a href="https://github.com/Eowea/hots-twitch-talents">Code source · Source code</a>
+</footer>
+
+<script src="legal.js"></script>
+</body>
+</html>
