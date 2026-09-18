@@ -17,6 +17,8 @@
      node pont.js --dernier --vitesse 20      rejoue la dernière partie jouée
      node pont.js --demo "<replay>" --vitesse 20
      node pont.js --code <code>               appairage sans question posée
+     node pont.js --langue en                 force la langue (sinon : celle
+                                              des paramètres régionaux)
    ========================================================================= */
 'use strict';
 
@@ -30,6 +32,7 @@ const mpq = require('./mpq.js');
 const tracker = require('./tracker.js');
 const live = require('./live.js');
 const vue = require('./affichage.js');
+const { texteDe } = require('./textes.js');
 
 /* Où le lecteur range sa configuration. Empaqueté en exécutable, il n'a plus
    de dossier de code : elle se pose alors à côté de l'exe, là où le streamer
@@ -69,10 +72,10 @@ function decoder(code) {
     contenu = JSON.parse(Buffer.from(String(code).trim(), 'base64url').toString('utf8'));
   } catch {
     // L'erreur d'analyse brute n'apprendrait rien à qui a simplement mal copié.
-    throw new Error('il semble tronqué ou mal copié');
+    throw new Error(texteDe('codeTronque'));
   }
   const { e, c, j } = contenu;
-  if (!e || !c || !j) throw new Error('il lui manque une partie');
+  if (!e || !c || !j) throw new Error(texteDe('codeIncomplet'));
   return { ebs: e, canal: String(c), jeton: j };
 }
 
@@ -80,12 +83,12 @@ function demanderCode() {
   const lecture = readline.createInterface({ input: process.stdin, output: process.stdout });
   return new Promise((resoudre) => {
     console.log('');
-    console.log('Premier démarrage.');
+    console.log(texteDe('premierDemarrage'));
     console.log('');
-    console.log("Ouvre la configuration de l'extension Talents sur ta chaîne Twitch,");
-    console.log("et copie le code d'appairage qu'elle affiche.");
+    console.log(texteDe('ouvreConfig'));
+    console.log(texteDe('copieCode'));
     console.log('');
-    lecture.question('Colle-le ici : ', (reponse) => {
+    lecture.question(texteDe('colleIci'), (reponse) => {
       lecture.close();
       resoudre(reponse);
     });
@@ -99,16 +102,16 @@ async function premierDemarrage() {
       const config = decoder(code);
       fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
       console.log('');
-      vue.dire(`  Appairé à la chaîne ${config.canal}.`);
-      console.log("C'est retenu : tu n'auras plus à le refaire.");
+      vue.dire(`  ${texteDe('appaire', { canal: config.canal })}`);
+      console.log(texteDe('retenu'));
       console.log('');
       return config;
     } catch (err) {
       console.log('');
-      console.log(`Ce code n'est pas valide (${err.message}). Réessaie.`);
+      console.log(texteDe('codeInvalide', { motif: err.message }));
     }
   }
-  console.error('Trois essais infructueux. Vérifie le code sur la page de configuration.');
+  console.error(texteDe('troisEssais'));
   return process.exit(1);
 }
 
@@ -157,7 +160,10 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
         // 401 : l'appairage ne vaut plus. Tout le reste est de notre côté.
         if (reponse.status === 401) vue.appairageRefuse();
         else vue.envoiRefuse(reponse.status);
-        vue.detail(`refus HTTP ${reponse.status} ${await reponse.text()}`);
+        vue.detail(texteDe('detailRefus', {
+          code: reponse.status,
+          corps: await reponse.text(),
+        }));
         return;
       }
 
@@ -166,11 +172,15 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
       vue.retabli();
 
       if (charge.j.length) vue.partie(charge);
-      vue.detail(`${charge.t}s — ${charge.j.length} joueurs — `
-        + `${Buffer.byteLength(corps)} octets${rappel ? ' (rappel)' : ''}`);
+      vue.detail(texteDe('detailEnvoi', {
+        temps: charge.t,
+        joueurs: charge.j.length,
+        octets: Buffer.byteLength(corps),
+        rappel: rappel ? texteDe('detailRappel') : '',
+      }));
     } catch (err) {
       vue.reseauCoupe();
-      vue.detail(`envoi impossible : ${err.message}`);
+      vue.detail(texteDe('detailEnvoiImpossible', { motif: err.message }));
     }
   };
 
@@ -230,11 +240,11 @@ function dernierReplay() {
 
   parcourir(racine, 0);
   if (!trouves.length) {
-    console.error('Aucun replay trouvé sous Documents\\Heroes of the Storm.');
+    console.error(texteDe('aucunReplay'));
     process.exit(1);
   }
   trouves.sort((a, b) => b.date - a.date);
-  vue.dire(`  Dernière partie : ${path.basename(trouves[0].chemin)}`);
+  vue.dire(`  ${texteDe('dernierePartie', { fichier: path.basename(trouves[0].chemin) })}`);
   return trouves[0].chemin;
 }
 
@@ -279,7 +289,7 @@ function rejouer(envoyer, fichier, vitesse) {
   const debut = Date.now();
   let curseur = 0;
 
-  vue.dire(`  Rejeu de « ${carte} » à ${vitesse}x\n`);
+  vue.dire(`  ${texteDe('rejeu', { carte, vitesse })}\n`);
 
   const minuterie = setInterval(() => {
     const horloge = ((Date.now() - debut) / 1000) * vitesse;
@@ -317,19 +327,22 @@ async function main() {
   if (fourni) {
     config = decoder(fourni);
     fs.writeFileSync(CONFIG, `${JSON.stringify(config, null, 2)}\n`, 'utf8');
-    vue.dire(`  Appairé à la chaîne ${config.canal}.`);
+    vue.dire(`  ${texteDe('appaire', { canal: config.canal })}`);
   } else if (!config.ebs || !config.canal || !config.jeton) {
     config = await premierDemarrage();
   }
 
   vue.demarrage(config.canal);
-  vue.detail(`service : ${config.ebs}`);
+  vue.detail(texteDe('detailService', { ebs: config.ebs }));
 
   const envoyer = creerEnvoyeur(config);
   const demo = args.includes('--dernier') ? dernierReplay() : valeur('--demo');
 
   if (demo) {
-    if (!fs.existsSync(demo)) { vue.dire(`  Fichier introuvable : ${demo}`); process.exit(1); }
+    if (!fs.existsSync(demo)) {
+      vue.dire(`  ${texteDe('fichierIntrouvable', { fichier: demo })}`);
+      process.exit(1);
+    }
     rejouer(envoyer, demo, Number(valeur('--vitesse') || 20));
   } else {
     suivrePartie(envoyer);

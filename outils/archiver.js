@@ -78,7 +78,7 @@ function verifier() {
 
   /* L'extension porte ses deux langues dans le même paquet : une clé oubliée
      ne se verrait qu'à l'écran d'un viewer, la version déjà figée. */
-  soucis.push(...langue.verifier().soucis);
+  soucis.push(...langue.verifierExtension().soucis);
 
   return { fichiers, soucis };
 }

@@ -21,6 +21,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync, execSync } = require('child_process');
 
+const langue = require('./verifier-langue.js');
+
 const RACINE = path.join(__dirname, '..');
 const BUILD = path.join(RACINE, 'build');
 const WINDOWS = process.platform === 'win32';
@@ -35,6 +37,15 @@ const mo = (chemin) => (fs.statSync(chemin).size / 1024 / 1024).toFixed(0);
 
 function main() {
   fs.mkdirSync(BUILD, { recursive: true });
+
+  /* Le lecteur est distribué : un message resté en français chez un diffuseur
+     anglophone ne se découvre qu'une fois l'exécutable téléchargé. */
+  const { soucis } = langue.verifierLecteur();
+  if (soucis.length) {
+    console.error("L'exécutable n'a pas été fabriqué :");
+    for (const souci of soucis) console.error(`  ${souci}`);
+    return process.exit(1);
+  }
 
   etape(1, 'Repliage des modules');
   execFileSync(process.execPath, [path.join(__dirname, 'empaqueter.js')], { stdio: 'inherit' });

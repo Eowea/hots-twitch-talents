@@ -11,9 +11,15 @@
    des états, pas des envois : une partie commence, elle avance, elle se
    termine.
 
+   Les textes viennent de textes.js, en français ou en anglais selon la
+   machine : ce programme est distribué, et son premier écran est celui d'un
+   inconnu qui vient de le télécharger.
+
    `--detail` rend le journal technique, pour diagnostiquer une panne.
    ========================================================================= */
 'use strict';
+
+const { texteDe } = require('./textes.js');
 
 const DETAIL = process.argv.includes('--detail');
 
@@ -54,37 +60,40 @@ const mmss = (s) => `${Math.floor(s / 60)}m${String(Math.round(s % 60)).padStart
 
 function demarrage(canal) {
   dire();
-  dire('  TALENTS — lecteur de parties');
+  dire(`  ${texteDe('banniere')}`);
   dire('  ' + '─'.repeat(40));
-  dire(`  Chaîne ${canal}`);
+  dire(`  ${texteDe('chaine', { canal })}`);
   dire();
-  dire('  Laisse cette fenêtre ouverte pendant que tu joues.');
-  dire('  Tu peux la réduire : elle n\'a rien à afficher d\'important.');
+  dire(`  ${texteDe('laisserOuvert')}`);
+  dire(`  ${texteDe('peutReduire')}`);
   dire();
 }
 
 function attente() {
-  dire('  En attente d\'une partie. Lance Heroes of the Storm.');
+  dire(`  ${texteDe('attente')}`);
   dire();
 }
 
 function partie(charge) {
   const talents = charge.j.reduce((n, j) => n + (j.t ? j.t.length : 0), 0);
-  surPlace(`  Partie en cours — ${mmss(charge.t)}  ·  ${charge.j.length} joueurs`
-    + `  ·  ${talents} talents suivis`);
+  surPlace(`  ${texteDe('enCours', {
+    temps: mmss(charge.t),
+    joueurs: charge.j.length,
+    talents,
+  })}`);
 }
 
 function finPartie() {
   effacerLigne();
-  dire('  Partie terminée.');
-  dire('  Le tableau reste visible quelques minutes chez tes viewers.');
+  dire(`  ${texteDe('terminee')}`);
+  dire(`  ${texteDe('resteVisible')}`);
   dire();
 }
 
 /* =========================================================================
    LES ENNUIS
-   Dits en français, avec ce qu'il faut faire — et une seule fois, pour ne pas
-   noyer l'écran pendant une coupure de réseau.
+   Dits dans la langue du diffuseur, avec ce qu'il faut faire — et une seule
+   fois, pour ne pas noyer l'écran pendant une coupure de réseau.
    ========================================================================= */
 
 let dernierEnnui = '';
@@ -102,24 +111,23 @@ function ennui(texte, conseil) {
 function retabli() {
   if (!dernierEnnui) return;
   dernierEnnui = '';
-  dire('  Connexion rétablie.');
+  dire(`  ${texteDe('retabli')}`);
   dire();
 }
 
 const reseauCoupe = () => ennui(
-  'Service injoignable.',
-  'Ta connexion est peut-être coupée. Le lecteur réessaiera tout seul.',
+  texteDe('injoignable'),
+  texteDe('injoignableConseil'),
 );
 
 const appairageRefuse = () => ennui(
-  'Ton appairage a été refusé.',
-  'Récupère un nouveau code sur la page de configuration de ton extension, '
-  + 'puis supprime le fichier pont.config.json à côté de ce programme.',
+  texteDe('appairageRefuse'),
+  texteDe('appairageRefuseConseil'),
 );
 
 const envoiRefuse = (code) => ennui(
-  `Le service a refusé l'envoi (code ${code}).`,
-  'Si ça persiste, préviens Eowea — ce n\'est pas de ton fait.',
+  texteDe('envoiRefuse', { code }),
+  texteDe('envoiRefuseConseil'),
 );
 
 /* Le journal technique, sur demande. */

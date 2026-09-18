@@ -139,12 +139,15 @@ Cinq points déjà tranchés :
   `hlsLatencyBroadcaster` (10-20 s). En overlay le tableau est collé à l'image :
   sans tampon, un talent apparaîtrait avant que le joueur ne le prenne à
   l'écran.
-- **Une seule extension, deux langues.** Twitch donne la langue du spectateur
-  dans l'adresse de l'iframe (`?language=fr&locale=fr-FR`) ; `langue.js` la lit
-  et traduit la page avant le premier rendu, avec repli sur l'anglais pour
-  toute autre langue. `talents.json` portait déjà les deux langues. Attention
-  au faux ami : le `language` de `onContext()` est celui de la **diffusion**,
-  pas du spectateur.
+- **Deux langues, un seul paquet — des deux côtés.** Dans l'extension, Twitch
+  donne la langue du spectateur dans l'adresse de l'iframe
+  (`?language=fr&locale=fr-FR`) ; `extension/langue.js` la lit et traduit la
+  page avant le premier rendu. Dans le lecteur, il n'y a pas de Twitch pour
+  l'annoncer : `textes.js` la déduit des paramètres régionaux
+  (`Intl.DateTimeFormat`, les variables `LANG`/`LC_ALL` étant vides sous
+  Windows), et `--langue en` la force. Repli sur l'anglais des deux côtés.
+  `talents.json` portait déjà les deux langues. Attention au faux ami : le
+  `language` de `onContext()` est celui de la **diffusion**, pas du spectateur.
 
 ## Fichiers
 
@@ -161,7 +164,7 @@ Cinq points déjà tranchés :
 | `serveur-local.js` | sert l'overlay et la charge utile, en direct ou en rejeu |
 | `extension/` | l'extension Twitch : overlay, panneau, habillage, table des talents |
 | `extension/langue.js` | détection de la langue du viewer et textes de l'interface |
-| `outils/verifier-langue.js` | refuse une traduction incomplète avant l'archive |
+| `outils/verifier-langue.js` | refuse une traduction incomplète, des deux côtés |
 | `outils/generer-talents.js` | reconstruit `extension/talents.json` depuis BUILDS |
 | `outils/construire.js` | fabrique `build/lecteur.exe`, de bout en bout |
 | `outils/empaqueter.js` | replie les modules du lecteur en un script unique |
@@ -170,6 +173,7 @@ Cinq points déjà tranchés :
 | `ebs/jwt.js` | signature et vérification HS256, avec le seul module crypto |
 | `ebs/test.js` | le parcours complet de l'EBS, sans Twitch |
 | `pont.js` | tourne sur ton PC : suit la partie et pousse vers l'EBS |
+| `textes.js` | les messages du lecteur, en français et en anglais |
 
 `mpq.js` et `bzip2.js` ne servent pas en direct : ils donnent accès aux replays
 déjà sur le disque, ce qui permet de tester sans lancer le jeu. `bzip2.js` a
@@ -346,8 +350,17 @@ dans une iframe.
 Le streamer ne doit rien installer. Un fichier, qu'il double-clique.
 
 ```bash
-node outils/construire.js
+node outils/construire.js       # vérifie les deux langues, puis fabrique
+node outils/verifier-langue.js  # les deux contrôles, seuls
 ```
+
+Une clé de traduction oubliée ne se voit ni à la compilation ni au chargement,
+seulement à l'écran d'un inconnu, la version déjà distribuée.
+`outils/verifier-langue.js` compare les deux tables, leurs marqueurs `{n}`, les
+clés citées par le balisage et par le code, et la détection de langue. Il est
+appelé par `archiver.js` pour l'extension et par `construire.js` pour le
+lecteur : ni l'archive ni l'exécutable ne se fabriquent s'il signale quelque
+chose.
 
 Quatre étapes automatisées : replier les sept modules du lecteur en un script
 unique, en faire un blob, copier le binaire de Node, y injecter le blob. Le
@@ -368,6 +381,12 @@ Ce que vit le streamer :
 
 La configuration se range **à côté de l'exécutable**, pas dans un dossier
 caché : il peut la voir, la sauvegarder, ou la supprimer pour se réappairer.
+
+Le lecteur lui parle dans sa langue, déduite de ses paramètres régionaux —
+anglais par défaut pour tout ce qui n'est ni français ni anglais. C'est le
+premier écran d'un inconnu qui vient de télécharger un exécutable non signé :
+il n'a pas à déchiffrer du français en plus. `lecteur.exe --langue en` force
+le choix, `--detail` montre le journal technique.
 
 Deux choses à savoir avant de distribuer :
 
