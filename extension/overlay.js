@@ -320,6 +320,7 @@ function avancerChrono() {
 }
 
 function afficher(etat) {
+  const precedent = dernierEtat;
   dernierEtat = etat;
   const enPartie = Boolean(etat && etat.j && etat.j.length);
   cadre.classList.toggle('partie', enPartie);
@@ -329,10 +330,19 @@ function afficher(etat) {
     return;
   }
 
-  if (etat.f) {
-    /* Partie terminée. Le tableau reste affiché jusqu'à la suivante, mais
-       l'horloge s'arrête sur le temps final : la laisser courir donnerait
-       l'illusion d'une partie encore en cours. */
+  /* Deux façons de savoir que la partie n'avance plus :
+
+     - `f`, que le lecteur pose dès que le jeu émet ses événements de fin.
+       Franc et immédiat, mais une partie quittée en cours n'en émet aucun.
+     - le temps de jeu qui ne progresse pas d'un message au suivant. Le
+       rappel périodique republie le même état toutes les dix secondes ; sans
+       cette seconde règle, l'horloge repartait de ce temps figé à chaque
+       rappel, grimpait dix secondes et retombait — une dent de scie.
+
+     Dans les deux cas on s'arrête sur le temps reçu. Une horloge ne recule
+     jamais : si la partie reprend, le message suivant porte un temps plus
+     grand et elle repart. */
+  if (etat.f || (precedent && etat.t <= precedent.t)) {
     chronoBase = null;
     ecrireChrono(etat.t || 0);
   } else {

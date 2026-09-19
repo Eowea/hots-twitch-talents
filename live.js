@@ -256,6 +256,9 @@ function chargeUtile(vue, carte) {
     t: vue.seconde,
     carte: carte || null,
     m: equipeDuDiffuseur(vue), // L'equipe a mettre a gauche, ou null.
+    /* Partie terminee : le tableau reste affiche, mais le chrono du viewer
+       doit s'arreter. Absent tant qu'elle dure, pour ne pas alourdir. */
+    ...(vue.finie ? { f: 1 } : {}),
     bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
     j: vue.joueurs.map((j) => ({
       e: j.equipe,

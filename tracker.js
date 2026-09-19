@@ -215,7 +215,7 @@ class TrackerStream {
    ========================================================================= */
 
 function newGame() {
-  return { demarree: false, gameloop: 0, joueurs: new Map(), bans: [] };
+  return { demarree: false, finie: false, gameloop: 0, joueurs: new Map(), bans: [] };
 }
 
 function player(game, id) {
@@ -280,6 +280,11 @@ function apply(game, events) {
         break;
 
       default:
+        /* Le jeu clot une partie menee a son terme par une rafale
+           d'evenements « EndOfGame... » — decompte d'experience, temps passe
+           mort, talents choisis. C'est l'annonce de fin la plus franche qu'il
+           fasse, et elle arrive a la seconde ou la partie s'acheve. */
+        if (typeof e.nom === 'string' && e.nom.startsWith('EndOfGame')) game.finie = true;
         break; // Le reste du journal ne sert pas au tableau.
     }
   }
@@ -297,6 +302,7 @@ function table(game) {
 
   return {
     seconde: Math.round(game.gameloop / LOOPS_PER_SECOND),
+    finie: game.finie,
     bans: game.bans,
     joueurs: joueurs.map((p) => ({
       joueur: p.joueur,
