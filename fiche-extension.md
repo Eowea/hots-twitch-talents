@@ -192,43 +192,148 @@ icônes trompeuses. L'hexagone doré du bouton, sur fond sombre, fait l'affaire.
 
 ---
 
-## 8. Note pour l'examinateur — le point le plus risqué
+## 8. Chaîne d'examen, guide et journal des modifications
 
-Twitch rejette d'abord les extensions qu'il **n'arrive pas à voir
-fonctionner**. La chaîne doit être en direct pendant l'examen, et personne ne
-sait quand il aura lieu.
+Deux champs, à la fin de la soumission. C'est le moment le plus risqué : Twitch
+rejette d'abord les extensions qu'il **n'arrive pas à voir fonctionner**.
 
-Deux choses jouent en ta faveur : le **panneau reste visible hors direct**, et
-il affiche alors « En attente d'une partie ». L'examinateur peut donc vérifier
-la mise en page à tout moment. Écris-le explicitement dans les notes de
-soumission :
+### Nom de la chaîne pour l'examen
 
 ```
-How to test this extension:
-
-The panel is visible on the channel page at all times, including offline, and
-shows "Waiting for a game" when no match is running.
-
-To see it filled with live data, the broadcaster must be streaming Heroes of
-the Storm with the companion reader running. I stream regularly at
-twitch.tv/eowea — if the channel is offline when you review, please contact
-eowea.contact@gmail.com and I will schedule a live session at a time that
-suits you, or provide a recorded walkthrough.
-
-The mobile view (mobile.html) is the same panel at phone width, from the same
-data. Nothing is sold, no viewer data is collected, there is no viewer input
-and no third-party content, so Apple guideline 4.7 raises nothing here.
-
-The reader is a small program the broadcaster runs locally. It reads the
-tracking file Heroes of the Storm writes to the Windows temp folder during a
-match. It does not modify or inject into the game and gives no in-game
-advantage: everything it shows is already visible on the broadcaster's screen.
-
-Source code, including the reader: github.com/Eowea/hots-twitch-talents
+https://www.twitch.tv/eowea
 ```
 
-Le mieux reste de **soumettre en étant en direct**, en train de jouer, avec le
-lecteur lancé.
+La version soumise doit être **activée sur cette chaîne** au moment de
+l'examen — panneau, superposition et mobile. Vérifie-le avant de cliquer sur
+Submit, pas après.
+
+### Le piège du direct
+
+Une superposition vidéo n'existe pas hors direct : Twitch le dit lui-même, une
+extension de ce type demande une chaîne **en live pendant la vérification**, et
+la vérification tombe entre 5 et 14 jours plus tard, week-ends et jours fériés
+américains non comptés. Personne ne peut rester en direct deux semaines.
+
+Twitch prévoit la sortie : **le signaler dans le guide**, et leur équipe prend
+contact pour caler un créneau. C'est écrit dans le texte ci-dessous, en tête,
+là où l'examinateur le lit en premier.
+
+Deux choses jouent en ta faveur : le **panneau reste visible hors direct**, où
+il affiche « En attente d'une partie » — la mise en page, les langues, le lien
+et les pages de configuration s'examinent donc à tout moment.
+
+### Guide et journal des modifications
+
+À recopier tel quel. L'anglais est la langue de l'équipe d'examen.
+
+```
+CHANNEL FOR REVIEW: https://www.twitch.tv/eowea
+The submitted version is installed and activated on that channel: panel,
+video overlay and mobile.
+
+SCHEDULING - PLEASE READ FIRST
+
+This extension includes a video overlay, so the channel has to be live for
+that view to be reviewable, and I cannot stay live continuously while the
+review is pending. Following your instructions I am flagging it here: please
+contact me at eowea.contact@gmail.com and I will go live with a real Heroes
+of the Storm match at whatever time suits your team, including outside
+European hours. I can also provide a recorded walkthrough on request.
+
+The PANEL view can be reviewed at any time, live or offline. It is visible on
+the channel page permanently and shows "Waiting for a game" when no match is
+running. Layout, viewer language, the off-site link and both broadcaster
+pages can all be checked without the channel being live.
+
+WHAT THE EXTENSION DOES
+
+Heroes of the Storm is a MOBA in which each of the ten players picks a talent
+at levels 1, 4, 7, 10, 13, 16 and 20. The game shows the broadcaster their
+own talents only; viewers see none at all. This extension displays the full
+talent grid of all ten players, live, as the picks happen, along with the
+draft bans, each team's level, and the hero and role behind every portrait.
+
+VIEWS SUBMITTED
+
+- Panel (panneau.html) - always visible on the channel page.
+- Video overlay (video_overlay.html) - a TALENTS button that opens the same
+  grid over the player. It is closed by default and the video is never
+  covered until the viewer opens it.
+- Mobile (mobile.html) - the panel at phone width.
+- Broadcaster config (config.html) and live dashboard (live_config.html).
+
+HOW TO TEST WITHOUT A LIVE GAME
+
+1. Open https://www.twitch.tv/eowea. The panel is below the player.
+2. With no match running it reads "Waiting for a game": the extension is
+   loaded and its service is answering.
+3. The language follows the VIEWER, not the channel. A viewer whose Twitch
+   language is French gets French, everyone else gets English. Switching your
+   Twitch language and reloading the page switches the panel.
+4. The "BUILDS SITE" button in the panel header opens
+   https://eowea.github.io/builds/ in a new tab, with the off-site arrow
+   required by guideline 4.6.2. That site is my own free Heroes of the Storm
+   build database: nothing is sold, no account is needed, no advertising, and
+   it duplicates no Twitch functionality.
+
+HOW TO TEST DURING A LIVE MATCH
+
+1. Portraits, player names, team levels and bans fill in as the game runs.
+2. A talent icon appears the moment that player picks it.
+3. Hovering a talent icon shows its name and its in-game description;
+   hovering a portrait shows the hero name and role. On mobile, tap instead
+   of hover, and tap again to close.
+4. The grid stays on screen after the match ends, until the next one starts.
+
+THE COMPANION READER - the point most likely to raise a question
+
+The data comes from a small program the broadcaster runs on their own PC. It
+reads "replay.tracker.events", a file Heroes of the Storm itself writes to
+the Windows temp folder while a match is in progress. The reader does not
+attach to the game process, does not read its memory, does not inject
+anything and modifies no game file. It gives no in-game advantage: every
+talent it publishes is already on the broadcaster's screen, and therefore
+already on the stream.
+
+It sends only what the panel shows: map, elapsed time, the ten heroes, their
+levels, their talents, the bans, and the players' Battle.net display names
+with the discriminator stripped (Bnet#123456 becomes Bnet) - the same names
+the game itself prints on the broadcaster's screen.
+
+Full source code, reader included:
+https://github.com/Eowea/hots-twitch-talents
+
+SETUP FLOW
+
+The broadcaster config page shows a pairing code. The broadcaster pastes it
+into the reader once and it is stored on their PC. That token authorises
+exactly one thing: publishing this panel to that channel. It grants no access
+to the Twitch account. The extension uses no Required Configuration, so it
+activates normally.
+
+VIEWER DATA
+
+None. The extension asks for no identity, sets no cookie, writes nothing to
+local storage and runs no analytics. Viewers are never identified, not even
+anonymously. The privacy policy and terms are published in English and French
+at the URLs given in the version details.
+
+MOBILE AND APPLE GUIDELINE 4.7
+
+The mobile view is the same panel at phone width, from the same data. Nothing
+is sold: no digital goods, no subscriptions, no donations, no gambling. There
+is no viewer input of any kind, therefore no third-party content to report,
+filter or block. No native API is extended or exposed. The content is general
+audience: hero portraits, talent icons and player display names.
+
+CHANGELOG
+
+First submission. No previous version of this extension has been reviewed.
+```
+
+Le mieux reste quand même de **soumettre en étant en direct**, en train de
+jouer, avec le lecteur lancé : l'examinateur qui tombe sur un tableau rempli
+n'a plus de question à poser.
 
 ---
 
@@ -243,6 +348,11 @@ lecteur lancé.
 - [ ] Le lien SITE BUILDS s'ouvre bien depuis le panneau installé.
 - [ ] Les captures montrent l'extension telle qu'elle est.
 - [ ] Le lecteur tourne et le panneau se remplit sur ta chaîne.
+- [ ] La version soumise est **activée sur twitch.tv/eowea** — c'est la chaîne
+      que tu déclares pour l'examen, et l'examinateur n'y verra rien sinon.
+- [ ] Le guide de la section 8 est collé dans « Guide et journal des
+      modifications », avec le paragraphe SCHEDULING en tête : c'est lui qui
+      évite le refus quand la chaîne est hors direct.
 
 Une seule version peut être en examen à la fois, et **toute resoumission te
 remet en fin de file** : mieux vaut une vérification de trop.
