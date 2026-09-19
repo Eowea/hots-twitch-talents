@@ -140,8 +140,6 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 }
 
 .titre { font-size: 18px; font-weight: 700; color: var(--or); letter-spacing: 0.1em; }
-.filet { width: 1px; height: 20px; background: rgba(240, 180, 41, 0.25); }
-.chrono { font-size: 16px; color: var(--attenue); font-variant-numeric: tabular-nums; }
 .pousse { flex-grow: 1; }
 .bans-libelle { font-size: 12px; color: var(--sourd); letter-spacing: 0.1em; }
 
@@ -304,7 +302,6 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
    des bans passent a la trappe avant que quoi que ce soit ne deborde. */
 .cadre.etroit .carte,
 .cadre.etroit .bans-libelle,
-.cadre.etroit .filet { display: none; }
 
 .cadre.etroit .entete { gap: 12px; padding: 12px 14px; }
 .cadre.etroit .corps { flex-direction: column; gap: 14px; }
@@ -373,8 +370,6 @@ body[data-mode="panneau"] {
 
 [data-mode="panneau"] .titre { font-size: 14px; letter-spacing: 0.08em; }
 [data-mode="panneau"] .carte { display: none; }
-[data-mode="panneau"] .filet { display: none; }
-[data-mode="panneau"] .chrono { font-size: 14px; }
 [data-mode="panneau"] .bans-libelle { display: none; }
 [data-mode="panneau"] .bans img { width: 18px; height: 21px; }
 

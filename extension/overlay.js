@@ -20,11 +20,6 @@ const LARGEUR_ETROITE = 560; // Une seule équipe, sur un petit lecteur.
 const SEUIL_ETROIT = 0.62; // En deçà, les icônes deviennent illisibles.
 const PALIERS = [1, 4, 7, 10, 13, 16, 20];
 
-/* Trois rappels manqués : le lecteur du streamer s'est arrêté. On fige alors
-   le chrono, parce qu'une horloge qui continue toute seule pendant que le
-   tableau ne bouge plus donnerait l'illusion d'une partie encore suivie. */
-const CHRONO_PERIME = 30000;
-
 const $ = (sel) => document.querySelector(sel);
 
 /* NFD sépare la lettre de son accent, qu'on retire ensuite : sans ça
@@ -53,7 +48,6 @@ const boutonOuvrir = $('#ouvrir');
 let table = null; // talents.json
 let indexHeros = new Map(); // alias -> identifiant BUILDS
 let equipeAffichee = 1; // Sur petit lecteur, l'équipe visible.
-let dernierEtat = null;
 
 /* =========================================================================
    LA TABLE DES TALENTS
@@ -295,63 +289,10 @@ function creerLigne(joueur) {
   return ligne;
 }
 
-/* =========================================================================
-   LE CHRONO
-
-   Le lecteur n'envoie plus un message par seconde : il ne parle que quand
-   quelque chose change à l'écran, et se rappelle toutes les dix secondes.
-   C'est donc ici qu'on fait avancer l'horloge, depuis le dernier repère reçu
-   — ce qui divise par trois le trafic vers le service sans que le viewer
-   voie la moindre différence.
-   ========================================================================= */
-
-let chronoBase = null; // { seconde, depuis }
-
-function ecrireChrono(secondes) {
-  const s = Math.max(0, Math.round(secondes));
-  $('#chrono').textContent = `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}`;
-}
-
-function avancerChrono() {
-  if (!chronoBase) return;
-  const ecoule = Date.now() - chronoBase.depuis;
-  if (ecoule > CHRONO_PERIME) return; // Plus de lecteur : on fige où on est.
-  ecrireChrono(chronoBase.seconde + ecoule / 1000);
-}
-
 function afficher(etat) {
-  const precedent = dernierEtat;
-  dernierEtat = etat;
   const enPartie = Boolean(etat && etat.j && etat.j.length);
   cadre.classList.toggle('partie', enPartie);
-  if (!enPartie) {
-    chronoBase = null;
-    $('#chrono').textContent = '';
-    return;
-  }
-
-  /* Deux façons de savoir que la partie n'avance plus :
-
-     - `f`, que le lecteur pose dès que le jeu émet ses événements de fin.
-       Franc et immédiat, mais une partie quittée en cours n'en émet aucun.
-     - le temps de jeu qui ne progresse pas d'un message au suivant. Le
-       rappel périodique republie le même état toutes les dix secondes ; sans
-       cette seconde règle, l'horloge repartait de ce temps figé à chaque
-       rappel, grimpait dix secondes et retombait — une dent de scie.
-
-     Dans les deux cas on s'arrête sur le temps reçu. Une horloge ne recule
-     jamais : si la partie reprend, le message suivant porte un temps plus
-     grand et elle repart. */
-  if (etat.f || (precedent && etat.t <= precedent.t)) {
-    chronoBase = null;
-    ecrireChrono(etat.t || 0);
-  } else {
-    /* Le repère est posé à l'affichage, pas à la réception : le tampon de
-       retard a déjà décalé l'appel, donc cet instant est bien celui où le
-       viewer voit cette seconde de jeu. */
-    chronoBase = { seconde: etat.t || 0, depuis: Date.now() };
-    avancerChrono();
-  }
+  if (!enPartie) return;
 
   const bans = $('#bans');
   bans.replaceChildren();
@@ -679,7 +620,6 @@ chargerTable().then(() => {
   }
 
   brancherInfobulle();
-  setInterval(avancerChrono, 1000);
   ajuster();
 
   if (window.Twitch && window.Twitch.ext) {
