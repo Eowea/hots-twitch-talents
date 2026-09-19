@@ -107,8 +107,15 @@ function watchGame(onUpdate, { intervalMs = 1000, onError = console.error } = {}
     const file = recent && Date.now() - recent.mtimeMs < FRAICHEUR_MAX ? recent : null;
 
     if (!file) {
-      // Dossier effacé : la partie est finie, on oublie tout.
-      if (current) { current = null; onUpdate(null); }
+      /* Pas de partie. On le dit a chaque tour, et pas seulement au moment ou
+         l'une se termine : un lecteur demarre hors partie ne publiait alors
+         rien du tout, et le viewer gardait sous les yeux le tableau de la
+         session precedente — parfois des heures.
+
+         Cela ne coute qu'un seul envoi : le pont dedoublonne, et son rappel
+         periodique laisse tomber les etats vides. */
+      current = null;
+      onUpdate(null);
       return;
     }
 
