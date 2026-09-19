@@ -2,12 +2,12 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Pas de user-scalable=no : bloquer le zoom est un défaut d'accessibilité,
+     et Apple le relève. Le double appui qui zoomerait par accident est écarté
+     au cas par cas dans la feuille de style (touch-action). -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Talents — Heroes of the Storm</title>
 <link rel="stylesheet" href="overlay.css?v=19">
-<!-- Le script d'aide de Twitch. Attention : il se charge et définit window.Twitch
-     même hors du lecteur, donc sa présence ne prouve rien. C'est le serveur
-     local, sondé par overlay.js, qui distingue le test du direct. -->
 <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 <!-- Le ?v= force le navigateur à relire ce fichier quand il change : sans
      lui, une adresse d'EBS modifiée reste en cache et l'extension appelle
@@ -16,18 +16,33 @@
 <script src="reglages.js?v=19"></script>
 </head>
 
-<!-- Le texte écrit ici est le français ; langue.js le remplace au chargement
+<!-- LA VUE MOBILE
+
+     Twitch la sert dans son application iOS et Android, sous la vidéo, sur
+     toute la largeur de l'écran. C'est la même page que le panneau — même
+     mise en page fluide, même source de données ; seul l'appui remplace le
+     survol. Le nom du fichier est imposé par la console : mobile.html.
+
+     Twitch soumet les vues mobiles à la règle 4.7 d'Apple, celle des
+     mini-applications intégrées à une application hôte. Ce que cette page
+     respecte, point par point :
+
+       — rien à acheter : ni bien numérique, ni abonnement, ni don, ni jeu
+         d'argent, ni lien vers un moyen de paiement ;
+       — aucune API native étendue ou exposée : la page ne fait qu'afficher
+         le tableau publié par la chaîne, par le même service que le panneau ;
+       — aucune saisie du spectateur : pas de champ, pas de message, donc
+         aucun contenu tiers à modérer, signaler ou bloquer ;
+       — aucune donnée du spectateur : ni compte, ni cookie, ni stockage
+         local, ni mesure d'audience ;
+       — tout public : des portraits de héros, des icônes de talents, et les
+         pseudos du salon tels que le jeu les affiche déjà sur le direct.
+
+     Le texte écrit ici est le français ; langue.js le remplace au chargement
      par celui du spectateur, avant le premier rendu. -->
-<body data-titre="titreTableau">
+<body data-mode="panneau" data-plateforme="mobile" data-titre="titreTableau">
 
-<!-- Tout est transparent tant que le viewer n'ouvre rien : Twitch refuse les
-     extensions qui masquent durablement la vidéo. -->
-<button id="ouvrir" class="pastille" type="button" aria-expanded="false" aria-controls="tableau">
-  <span class="pastille-hex" aria-hidden="true"></span>
-  <span data-t="talents">TALENTS</span>
-</button>
-
-<div id="tableau" class="tableau" hidden>
+<div id="tableau" class="tableau">
   <div class="cadre">
     <header class="entete">
       <span class="titre" data-t="talents">TALENTS</span>
@@ -39,7 +54,6 @@
         <span data-t="voirBuilds">BUILDS</span>
         <span class="hors-site" aria-hidden="true">↗</span>
       </a>
-      <button id="fermer" class="fermer" type="button" data-t-aria="fermerTableau" aria-label="Fermer le tableau">&#215;</button>
     </header>
 
     <div class="corps">
@@ -56,7 +70,6 @@
         <div class="paliers" aria-hidden="true"></div>
         <div class="lignes"></div>
       </section>
-      <div class="separateur" aria-hidden="true"></div>
       <section class="colonne" data-equipe="2">
         <div class="bandeau">
           <span class="marque"></span>

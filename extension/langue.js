@@ -42,7 +42,7 @@ const TEXTES = {
     /* Le tableau */
     titreTableau: 'Talents — Heroes of the Storm',
     talents: 'TALENTS',
-    bannis: 'BANNIS',
+    bannis: 'BANS :',
     equipeBleue: 'ÉQUIPE BLEUE',
     equipeRouge: 'ÉQUIPE ROUGE',
     /* Quand le lecteur a reconnu le diffuseur, on nomme les équipes par
@@ -50,6 +50,21 @@ const TEXTES = {
        viewer a sous les yeux sur la vidéo. */
     equipeAlliee: 'ÉQUIPE ALLIÉE',
     equipeAdverse: 'ÉQUIPE ADVERSE',
+
+    /* Les rôles, tels que le jeu les nomme. BUILDS les stocke en un seul
+       identifiant sans espace ; c'est ici qu'on leur rend leur nom. */
+    AssassinDistance: 'Assassin Distance',
+    AssassinMelee: 'Assassin Mêlée',
+    Bruiser: 'Bruiser',
+    Healer: 'Soigneur',
+    Support: 'Soutien',
+    Tank: 'Tank',
+    banni: 'Banni',
+
+    /* Le lien vers le site de builds. La flèche signale qu'il quitte Twitch,
+       comme la règle 4.6.2 de leurs conditions l'exige. */
+    voirBuilds: 'SITE BUILDS',
+    voirBuildsTitre: 'Ouvrir EOWEA BUILDS dans un nouvel onglet',
     attente: "En attente d'une partie…",
     fermerTableau: 'Fermer le tableau',
     niveau: 'niveau {n}',
@@ -111,11 +126,22 @@ const TEXTES = {
     /* The panel */
     titreTableau: 'Talents — Heroes of the Storm',
     talents: 'TALENTS',
-    bannis: 'BANNED',
+    bannis: 'BANS:',
     equipeBleue: 'BLUE TEAM',
     equipeRouge: 'RED TEAM',
     equipeAlliee: 'ALLIED TEAM',
     equipeAdverse: 'ENEMY TEAM',
+
+    AssassinDistance: 'Ranged Assassin',
+    AssassinMelee: 'Melee Assassin',
+    Bruiser: 'Bruiser',
+    Healer: 'Healer',
+    Support: 'Support',
+    Tank: 'Tank',
+    banni: 'Banned',
+
+    voirBuilds: 'BUILDS SITE',
+    voirBuildsTitre: 'Open EOWEA BUILDS in a new tab',
     attente: 'Waiting for a game…',
     fermerTableau: 'Close the panel',
     niveau: 'level {n}',
@@ -185,8 +211,9 @@ function texteDe(cle, valeurs) {
 }
 
 /* Le balisage porte les clés, pas les textes : data-t pour le contenu,
-   data-t-aria pour l'étiquette d'accessibilité, data-titre sur <body> pour
-   le titre de la page. */
+   data-t-aria pour l'étiquette d'accessibilité, data-t-titre-lien pour
+   l'infobulle native d'un lien, data-titre sur <body> pour le titre de la
+   page. */
 function traduirePage() {
   document.documentElement.lang = LANGUE;
 
@@ -195,6 +222,9 @@ function traduirePage() {
   }
   for (const element of document.querySelectorAll('[data-t-aria]')) {
     element.setAttribute('aria-label', texteDe(element.dataset.tAria));
+  }
+  for (const element of document.querySelectorAll('[data-t-titre-lien]')) {
+    element.setAttribute('title', texteDe(element.dataset.tTitreLien));
   }
   if (document.body.dataset.titre) {
     document.title = texteDe(document.body.dataset.titre);

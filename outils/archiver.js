@@ -28,6 +28,7 @@ const ARCHIVE = path.join(RACINE, 'build', 'extension.zip');
 const ATTENDUS = [
   'video_overlay.html',
   'panneau.html',
+  'mobile.html',
   'config.html',
   'live_config.html',
 ];

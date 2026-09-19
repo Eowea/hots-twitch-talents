@@ -205,10 +205,11 @@ const urlPortrait = (fichier) => table.base + table.prefixePortrait + fichier;
    RENDU
    ========================================================================= */
 
-/* Ce que chaque case décrit. Une table faible plutôt que des attributs dans
-   le DOM : soixante-dix descriptions de cent caractères n'ont rien à faire
-   dans le document. */
-const talentDeLaCase = new WeakMap();
+/* Ce que chaque élément survolable décrit — une case de talent, un portrait de
+   joueur, un ban. Une table faible plutôt que des attributs dans le DOM :
+   soixante-dix descriptions de cent caractères n'ont rien à faire dans le
+   document. */
+const infoDeLElement = new WeakMap();
 
 function creerCase(hero, identifiant, palier) {
   const talent = trouverTalent(hero, identifiant, palier);
@@ -219,7 +220,7 @@ function creerCase(hero, identifiant, palier) {
     const vide = document.createElement('div');
     vide.className = 'case';
     vide.tabIndex = 0;
-    talentDeLaCase.set(vide, { brut: identifiant });
+    infoDeLElement.set(vide, { brut: identifiant });
     return vide;
   }
 
@@ -236,7 +237,7 @@ function creerCase(hero, identifiant, palier) {
       .slice(0, 2)
       .map((mot) => mot[0].toUpperCase())
       .join('');
-    talentDeLaCase.set(sansImage, talent);
+    infoDeLElement.set(sansImage, talent);
     return sansImage;
   }
 
@@ -245,7 +246,21 @@ function creerCase(hero, identifiant, palier) {
   img.src = urlIcone(talent.icone);
   img.alt = enLangue(talent);
   img.tabIndex = 0;
-  talentDeLaCase.set(img, talent);
+  infoDeLElement.set(img, talent);
+  return img;
+}
+
+/* Un portrait de héros, survolable. Sert aux lignes de joueur comme aux bans :
+   dans les deux cas l'infobulle doit dire le nom du héros et son rôle. */
+function creerPortrait(hero, classe, banni = false) {
+  const img = document.createElement('img');
+  img.className = classe;
+  img.alt = hero ? enLangue(hero.nom) : '';
+  if (hero && hero.portrait) img.src = urlPortrait(hero.portrait);
+  if (hero) {
+    img.tabIndex = 0;
+    infoDeLElement.set(img, { hero, banni });
+  }
   return img;
 }
 
@@ -255,11 +270,7 @@ function creerLigne(joueur) {
   ligne.className = 'ligne';
   ligne.dataset.equipe = joueur.e;
 
-  const portrait = document.createElement('img');
-  portrait.className = 'portrait';
-  portrait.alt = '';
-  if (hero && hero.portrait) portrait.src = urlPortrait(hero.portrait);
-  ligne.append(portrait);
+  ligne.append(creerPortrait(hero, 'portrait'));
 
   const identite = document.createElement('div');
   identite.className = 'identite';
@@ -294,19 +305,6 @@ function afficher(etat) {
   cadre.classList.toggle('partie', enPartie);
   if (!enPartie) return;
 
-  const bans = $('#bans');
-  bans.replaceChildren();
-  $('#bans-libelle').hidden = !(etat.bans && etat.bans.length);
-  for (const identifiant of etat.bans || []) {
-    const hero = trouverHeros(identifiant);
-    if (!hero || !hero.portrait) continue;
-    const img = document.createElement('img');
-    img.src = urlPortrait(hero.portrait);
-    img.alt = enLangue(hero.nom);
-    img.title = enLangue(hero.nom);
-    bans.append(img);
-  }
-
   /* Le jeu montre toujours au joueur sa propre équipe en bleu, à gauche,
      quelle que soit l'équipe 1 ou 2 du fichier. Sans ce réordonnancement, une
      partie sur deux, le viewer aurait vu les couleurs inversées par rapport à
@@ -337,6 +335,21 @@ function afficher(etat) {
       colonne.querySelector('.bandeau').append(cartouche);
     }
     cartouche.textContent = niveau ? texteDe('niveau', { n: niveau }) : '';
+
+    /* Les bans en face de l'équipe qui les a posés, plutôt qu'en tas dans
+       l'en-tête : on voit d'un coup d'œil qui a banni quoi. */
+    const bans = colonne.querySelector('.bans');
+    bans.replaceChildren();
+    for (const ban of etat.bans || []) {
+      if (ban.e !== equipe) continue;
+      const hero = trouverHeros(ban.h);
+      if (!hero || !hero.portrait) continue;
+      bans.append(creerPortrait(hero, 'ban', true));
+    }
+
+    /* Le libellé ne paraît que s'il a quelque chose à annoncer : l'ARAM n'a
+       pas de draft, et un « BANS : » suivi de rien ferait croire à une panne. */
+    colonne.querySelector('.bans-libelle').hidden = !bans.childElementCount;
 
     const paliers = colonne.querySelector('.paliers');
     if (!paliers.childElementCount) {
@@ -377,8 +390,44 @@ function creerInfobulle() {
   return element;
 }
 
+/* Le portrait d'un héros : son nom, son rôle, et la mention « banni » quand
+   c'est un ban. Le rôle vient de BUILDS sous forme d'identifiant — langue.js
+   lui rend son nom dans la langue du viewer. */
+function remplirInfobulleHeros({ hero, banni }) {
+  const entete = document.createElement('div');
+  entete.className = 'infobulle-entete';
+
+  if (hero.portrait) {
+    const portrait = document.createElement('img');
+    portrait.className = 'infobulle-portrait';
+    portrait.src = urlPortrait(hero.portrait);
+    portrait.alt = '';
+    entete.append(portrait);
+  }
+
+  const titres = document.createElement('div');
+  const nom = document.createElement('div');
+  nom.className = 'infobulle-nom';
+  nom.textContent = enLangue(hero.nom);
+
+  const dessous = document.createElement('div');
+  dessous.className = 'infobulle-palier';
+  const role = hero.role ? texteDe(hero.role) : '';
+  dessous.textContent = banni && role ? `${role} · ${texteDe('banni')}`
+    : (role || (banni ? texteDe('banni') : ''));
+
+  titres.append(nom, dessous);
+  entete.append(titres);
+  infobulle.append(entete);
+}
+
 function remplirInfobulle(talent) {
   infobulle.replaceChildren();
+
+  if (talent.hero) {
+    remplirInfobulleHeros(talent);
+    return;
+  }
 
   if (talent.brut) {
     const brut = document.createElement('div');
@@ -436,7 +485,7 @@ function placerInfobulle(case_) {
 }
 
 function montrerInfobulle(case_) {
-  const talent = talentDeLaCase.get(case_);
+  const talent = infoDeLElement.get(case_);
   if (!talent) return;
 
   if (!infobulle) infobulle = creerInfobulle();
@@ -450,19 +499,52 @@ function cacherInfobulle() {
 }
 
 function brancherInfobulle() {
+  /* Un appui n'est pas un survol. Le navigateur fabrique quand même un
+     mouseover après le doigt : il rouvrirait l'infobulle que l'appui vient
+     de refermer. On coupe donc le chemin souris dès le premier doigt. */
+  let tactile = false;
+  let ouverte = null;
+
+  const viser = (evenement) => evenement.target.closest('.case, .portrait, .ban');
+
   const surCase = (evenement) => {
-    const case_ = evenement.target.closest('.case');
-    if (case_) montrerInfobulle(case_);
+    if (tactile) return;
+    const cible = viser(evenement);
+    if (cible) montrerInfobulle(cible);
+  };
+
+  const surSortie = () => {
+    if (!tactile) cacherInfobulle();
   };
 
   cadre.addEventListener('mouseover', surCase);
   cadre.addEventListener('focusin', surCase);
-  cadre.addEventListener('mouseout', cacherInfobulle);
-  cadre.addEventListener('focusout', cacherInfobulle);
+  cadre.addEventListener('mouseout', surSortie);
+  cadre.addEventListener('focusout', surSortie);
+
+  /* Tactile : un appui montre, un second appui sur la même case referme, un
+     appui ailleurs referme aussi. Posé sur le document et non sur le cadre,
+     pour attraper l'appui donné hors du tableau. */
+  document.addEventListener('pointerdown', (evenement) => {
+    if (evenement.pointerType !== 'touch') return;
+    tactile = true;
+
+    const cible = viser(evenement);
+    if (!cible || cible === ouverte) {
+      ouverte = null;
+      cacherInfobulle();
+      return;
+    }
+    ouverte = cible;
+    montrerInfobulle(cible);
+  });
 
   // Le tableau bouge sous le curseur a chaque mise a jour : une infobulle
   // laissee en place designerait alors la mauvaise case.
-  window.addEventListener('scroll', cacherInfobulle, true);
+  window.addEventListener('scroll', () => {
+    ouverte = null;
+    cacherInfobulle();
+  }, true);
 }
 
 /* =========================================================================

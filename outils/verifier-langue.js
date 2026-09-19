@@ -24,7 +24,7 @@ const RACINE = path.join(__dirname, '..');
 const EXTENSION = path.join(RACINE, 'extension');
 
 // Doit suivre le ?v= des pages : l'archive et le cache du navigateur en dépendent.
-const VERSION_ATTENDUE = '13';
+const VERSION_ATTENDUE = '19';
 
 const ACCENTS = /[éèêëàâçôöûùïîœÉÈÀÇÊÔÎÙ]/;
 
@@ -99,7 +99,7 @@ function verifierAppels(fichier, source, cles, TEXTES, soucis) {
    L'EXTENSION — extension/langue.js, lu par un navigateur
    ========================================================================= */
 
-const HTML = ['panneau.html', 'video_overlay.html', 'config.html', 'live_config.html'];
+const HTML = ['panneau.html', 'mobile.html', 'video_overlay.html', 'config.html', 'live_config.html'];
 const JS_EXTENSION = ['overlay.js', 'config.js', 'live_config.js'];
 
 /* langue.js s'exécute dans un navigateur. On lui en fabrique juste assez pour

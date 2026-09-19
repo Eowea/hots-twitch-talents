@@ -82,6 +82,9 @@ async function main() {
     if (h.enabled === false) continue;
     heros[h.id] = {
       nom: { fr: h.name.fr, en: h.name.en },
+      // Le role s'affiche au survol du portrait ; BUILDS le nomme en un seul
+      // identifiant (« AssassinDistance »), que l'extension traduit.
+      role: h.role || null,
       portrait: raccourcir(h.portrait, PREFIXE_PORTRAIT),
       // Les alias servent à retrouver le héros depuis l'identifiant du jeu,
       // qui le nomme souvent par son personnage d'origine (Amazon = Cassia).

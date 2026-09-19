@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Talents — Heroes of the Storm</title>
-<link rel="stylesheet" href="overlay.css?v=13">
+<link rel="stylesheet" href="overlay.css?v=19">
 <script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
 <!-- Le ?v= force le navigateur à relire ce fichier quand il change : sans
      lui, une adresse d'EBS modifiée reste en cache et l'extension appelle
      l'ancienne, sans autre symptôme qu'un « injoignable ». À incrémenter à
      chaque modification de reglages.js. -->
-<script src="reglages.js?v=13"></script>
+<script src="reglages.js?v=19"></script>
 </head>
 
 <!-- Un panneau est toujours visible : pas de bouton d'ouverture, pas de
@@ -25,18 +25,38 @@
     <header class="entete">
       <span class="titre" data-t="talents">TALENTS</span>
       <span class="pousse"></span>
-      <span id="bans-libelle" class="bans-libelle" data-t="bannis" hidden>BANNIS</span>
-      <span id="bans" class="bans"></span>
+      <!-- La flèche signale que le lien quitte Twitch : leur règle 4.6.2 exige
+           un indicateur visible. rel="noopener" parce qu'on ouvre un onglet. -->
+      <a class="lien-builds" href="https://eowea.github.io/builds/"
+         target="_blank" rel="noopener noreferrer" data-t-titre-lien="voirBuildsTitre">
+        <span data-t="voirBuilds">BUILDS</span>
+        <span class="hors-site" aria-hidden="true">↗</span>
+      </a>
     </header>
 
     <div class="corps">
       <section class="colonne" data-equipe="1">
-        <div class="bandeau"><span class="marque"></span><h2 data-t="equipeBleue">ÉQUIPE BLEUE</h2></div>
+        <!-- Le cartouche de niveau et les bans sont remplis par overlay.js. -->
+        <div class="bandeau">
+          <span class="marque"></span>
+          <h2 data-t="equipeBleue">ÉQUIPE BLEUE</h2>
+          <span class="niveau-equipe"></span>
+          <span class="pousse"></span>
+          <span class="bans-libelle" data-t="bannis" hidden>BANS</span>
+          <span class="bans"></span>
+        </div>
         <div class="paliers" aria-hidden="true"></div>
         <div class="lignes"></div>
       </section>
       <section class="colonne" data-equipe="2">
-        <div class="bandeau"><span class="marque"></span><h2 data-t="equipeRouge">ÉQUIPE ROUGE</h2></div>
+        <div class="bandeau">
+          <span class="marque"></span>
+          <h2 data-t="equipeRouge">ÉQUIPE ROUGE</h2>
+          <span class="niveau-equipe"></span>
+          <span class="pousse"></span>
+          <span class="bans-libelle" data-t="bannis" hidden>BANS</span>
+          <span class="bans"></span>
+        </div>
         <div class="paliers" aria-hidden="true"></div>
         <div class="lignes"></div>
       </section>
@@ -46,7 +66,7 @@
   </div>
 </div>
 
-<script src="langue.js?v=13"></script>
-<script src="overlay.js?v=13"></script>
+<script src="langue.js?v=19"></script>
+<script src="overlay.js?v=19"></script>
 </body>
 </html>

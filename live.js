@@ -259,7 +259,11 @@ function chargeUtile(vue, carte) {
     /* Partie terminee : le tableau reste affiche, mais le chrono du viewer
        doit s'arreter. Absent tant qu'elle dure, pour ne pas alourdir. */
     ...(vue.finie ? { f: 1 } : {}),
-    bans: (vue.bans || []).map((b) => b.herosId).filter(Boolean),
+    /* Chaque ban avec l'equipe qui l'a pose : le tableau les range en face
+       de la bonne colonne, pour qu'on sache qui a banni quoi. */
+    bans: (vue.bans || [])
+      .filter((b) => b.herosId)
+      .map((b) => ({ e: b.equipe, h: b.herosId })),
     j: vue.joueurs.map((j) => ({
       e: j.equipe,
       n: sansDiscriminant(j.battletag),

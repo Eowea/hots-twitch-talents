@@ -64,15 +64,21 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
   position: absolute;
   right: 22px;
 
-  /* Twitch rend l'extension SOUS les contrôles de son lecteur, et prévient
-     que « les interactions avec ces éléments peuvent ne pas fonctionner ».
-     À 22 px du bas, le bouton tombait derrière la barre de contrôle — visible,
-     mais inerte : le clic partait à Twitch. On le remonte au-dessus.
+  /* Deux choses encombrent le coin bas-droit, et les deux comptent.
 
-     La barre a une hauteur à peu près fixe en pixels, d'où le plancher ; le
-     pourcentage prend le relais sur les grands lecteurs, où elle est plus
-     haute et où sa zone de survol déborde davantage. */
-  bottom: max(84px, 14%);
+     La barre de contrôle de Twitch d'abord : l'extension est rendue SOUS elle,
+     et Twitch prévient que « les interactions avec ces éléments peuvent ne pas
+     fonctionner ». À 22 px du bas, le bouton s'affichait mais restait inerte,
+     le clic partant à Twitch. Sa hauteur est à peu près fixe en pixels, d'où
+     le plancher.
+
+     La minimap du jeu ensuite, qui occupe ce même coin sur à peu près le quart
+     inférieur de l'image. Elle, elle suit la taille de la vidéo : c'est donc un
+     pourcentage qu'il lui faut.
+
+     max() prend le plus contraignant des deux. Si la minimap dépasse encore,
+     c'est ce 30 % qu'il faut augmenter, et lui seul. */
+  bottom: max(84px, 30%);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -141,16 +147,62 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 
 .titre { font-size: 18px; font-weight: 700; color: var(--or); letter-spacing: 0.1em; }
 .pousse { flex-grow: 1; }
-.bans-libelle { font-size: 12px; color: var(--sourd); letter-spacing: 0.1em; }
 
-.bans { display: flex; gap: 5px; }
+/* =========================================================================
+   LE LIEN VERS BUILDS
 
-.bans img {
-  width: 26px;
-  height: 31px;
-  border-radius: 3px;
-  filter: grayscale(1) brightness(0.55);
+   Twitch exige un indicateur visible quand un lien quitte la plateforme
+   (règle 4.6.2) : c'est la flèche. Le cadre le distingue d'un simple mot du
+   titre, sans pour autant crier plus fort que « TALENTS ».
+   ========================================================================= */
+
+.lien-builds {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border: 1px solid var(--or-filet);
+  border-radius: 4px;
+  color: var(--or);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  white-space: nowrap;
 }
+
+.lien-builds:hover,
+.lien-builds:focus-visible { border-color: var(--or); color: var(--or-vif); }
+
+.hors-site { font-size: 11px; opacity: 0.75; }
+
+/* =========================================================================
+   LES BANS
+
+   Ils vivent dans le bandeau de l'équipe qui les a posés, pas dans l'en-tête :
+   un ban sans son auteur n'apprend qu'à moitié quelque chose.
+   ========================================================================= */
+
+.bans-libelle {
+  font-size: 11px;
+  color: var(--sourd);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.bans { display: flex; gap: 4px; align-self: center; }
+
+.ban {
+  width: 22px;
+  height: 26px;
+  border-radius: 3px;
+  /* Assez éteint pour qu'on ne confonde pas un banni avec un joué, assez
+     clair pour qu'on reconnaisse le héros — c'est tout l'intérêt. */
+  filter: grayscale(0.45) brightness(0.82);
+  border: 1px solid rgba(217, 100, 91, 0.55);
+}
+
+.ban:hover, .ban:focus-visible { filter: none; border-color: var(--or); }
 
 .fermer {
   display: flex;
@@ -179,7 +231,8 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 .colonne { display: flex; flex-direction: column; gap: 10px; flex: 1 1 0; min-width: 0; }
 .separateur { width: 1px; background: rgba(226, 216, 255, 0.1); }
 
-.bandeau { display: flex; align-items: baseline; gap: 9px; }
+/* Centre plutot que baseline : le bandeau porte desormais des portraits. */
+.bandeau { display: flex; align-items: center; gap: 9px; }
 
 /* Le nom d'equipe garde sa place, le niveau se pose juste apres. */
 .bandeau h2 { flex-shrink: 0; }
@@ -298,11 +351,8 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 
 /* Sur un lecteur étroit, le tableau réduit passe sous le seuil de lisibilité :
    on n'affiche plus qu'une équipe, avec une bascule. */
-/* Sur un lecteur etroit, l'entete se degarnit : le nom de carte et le libelle
-   des bans passent a la trappe avant que quoi que ce soit ne deborde. */
-.cadre.etroit .carte,
-.cadre.etroit .bans-libelle,
-
+/* Sur un lecteur étroit, l'en-tête se resserre. Il ne porte plus que le titre
+   et le lien : il n'y a plus rien à sacrifier pour gagner de la place. */
 .cadre.etroit .entete { gap: 12px; padding: 12px 14px; }
 .cadre.etroit .corps { flex-direction: column; gap: 14px; }
 .cadre.etroit .separateur { display: none; }
@@ -342,10 +392,21 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
    portrait 18 + nom 92 + (7 icones de 24 + 6 espaces de 2) 180 + 2 espaces de
    ligne de 4 = 298. Le niveau ayant rejoint le bandeau, ses 16 px et son
    espace sont revenus au nom — de quoi loger « The Lost Vikings » en entier. */
+/* Le panneau ne vit plus seulement dans les 318 px de Twitch : l'application
+   mobile lui en donne 360 a 430, et un navigateur d'avantage encore. Les
+   dimensions se deduisent donc de la largeur disponible au lieu d'etre
+   calees au pixel.
+
+   La soustraction est le budget fixe d'une ligne : 20 de marge laterale,
+   8 pour les deux espaces de la ligne, 12 pour les six espaces entre icones.
+   Ce qui reste se partage entre les sept paliers.
+
+   A 318 px on retombe exactement sur les 24 px d'avant ; a 390 px, la
+   largeur d'un telephone courant, les icones passent a 33. */
 [data-mode="panneau"] {
-  --icone: 24px;
-  --portrait: 18px;
-  --nom: 92px;
+  --portrait: clamp(18px, 5vw, 26px);
+  --nom: clamp(92px, 26vw, 140px);
+  --icone: min(38px, calc((100vw - 40px - var(--portrait) - var(--nom)) / 7));
 }
 
 [data-mode="panneau"] body,
@@ -369,9 +430,17 @@ body[data-mode="panneau"] {
 }
 
 [data-mode="panneau"] .titre { font-size: 14px; letter-spacing: 0.08em; }
-[data-mode="panneau"] .carte { display: none; }
-[data-mode="panneau"] .bans-libelle { display: none; }
-[data-mode="panneau"] .bans img { width: 18px; height: 21px; }
+[data-mode="panneau"] .lien-builds {
+  padding: 3px 7px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+/* Trois bans par equipe dans 318 px : on les resserre, l'infobulle prenant
+   le relais pour qui veut lire un nom. */
+[data-mode="panneau"] .bans-libelle { font-size: 9px; letter-spacing: 0.05em; }
+[data-mode="panneau"] .bans { gap: 3px; }
+[data-mode="panneau"] .ban { width: 16px; height: 19px; }
 
 [data-mode="panneau"] .corps {
   flex-direction: column;
@@ -403,6 +472,75 @@ body[data-mode="panneau"] {
 
 [data-mode="panneau"] .niveau-equipe { font-size: 11px; }
 [data-mode="panneau"] .attente { padding: 24px 12px; font-size: 13px; }
+
+/* =========================================================================
+   LE PANNEAU SUR UN ECRAN PLUS LARGE
+
+   Telephone, tablette, ou simplement un panneau que Twitch elargit. Les
+   textes grandissent avec les icones, sans quoi le tableau aurait l'air
+   d'une maquette etiree.
+   ========================================================================= */
+
+@media (min-width: 340px) {
+  [data-mode="panneau"] .titre { font-size: clamp(14px, 4vw, 18px); }
+  [data-mode="panneau"] .bandeau h2 { font-size: clamp(11px, 3vw, 13px); }
+  [data-mode="panneau"] .niveau-equipe { font-size: clamp(11px, 3vw, 13px); }
+  [data-mode="panneau"] .identite .heros { font-size: clamp(12px, 3.6vw, 15px); }
+  [data-mode="panneau"] .identite .tag { font-size: clamp(9px, 2.8vw, 12px); }
+  [data-mode="panneau"] .paliers span { font-size: clamp(10px, 2.8vw, 12px); }
+  [data-mode="panneau"] .ban { width: clamp(16px, 5vw, 24px); height: auto; }
+  [data-mode="panneau"] .lien-builds { font-size: clamp(10px, 2.8vw, 12px); }
+  [data-mode="panneau"] .bans-libelle { font-size: clamp(9px, 2.6vw, 11px); }
+  [data-mode="panneau"] .entete { padding: clamp(9px, 3vw, 14px) clamp(10px, 3vw, 16px); }
+  [data-mode="panneau"] .corps { padding: clamp(10px, 3vw, 14px); }
+}
+
+/* Assez large pour les deux equipes cote a cote : telephone couche, tablette.
+   Le budget d'une ligne se calcule alors sur une demi-largeur. */
+@media (min-width: 720px) {
+  [data-mode="panneau"] {
+    --nom: clamp(100px, 13vw, 158px);
+    --icone: min(34px, calc((50vw - 46px - var(--portrait) - var(--nom)) / 7));
+  }
+
+  [data-mode="panneau"] .corps { flex-direction: row; gap: 22px; }
+}
+
+/* =========================================================================
+   LA VUE MOBILE — mobile.html
+
+   Rien à refaire de la mise en page : elle se déduit déjà de la largeur, et
+   un téléphone n'est qu'une largeur de plus. Ne restent que les habitudes du
+   doigt, qui ne sont pas celles du curseur.
+   ========================================================================= */
+
+[data-plateforme="mobile"] { -webkit-tap-highlight-color: transparent; }
+
+/* Sans cela, deux appuis rapprochés zooment la page au lieu d'ouvrir deux
+   infobulles à la suite. Posé sur les éléments et non sur la page : le
+   spectateur garde le droit de zoomer où il veut. */
+[data-plateforme="mobile"] .case,
+[data-plateforme="mobile"] .portrait,
+[data-plateforme="mobile"] .ban,
+[data-plateforme="mobile"] .lien-builds { touch-action: manipulation; }
+
+/* Un appui maintenu sur une icône sélectionnerait le texte voisin et
+   ouvrirait le menu de copie par-dessus l'infobulle. */
+[data-plateforme="mobile"] .entete,
+[data-plateforme="mobile"] .bandeau,
+[data-plateforme="mobile"] .paliers,
+[data-plateforme="mobile"] .identite {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Le lien est la seule cible que le spectateur doit atteindre du pouce : il
+   lui faut la hauteur d'un vrai bouton, pas celle d'une étiquette. */
+[data-plateforme="mobile"] .lien-builds {
+  min-height: 32px;
+  padding: 6px 11px;
+}
+
 
 /* =========================================================================
    INFOBULLE
@@ -442,6 +580,14 @@ body[data-mode="panneau"] {
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+.infobulle-portrait {
+  flex-shrink: 0;
+  width: 34px;
+  height: 40px;
+  border-radius: 4px;
+  object-fit: cover;
 }
 
 .infobulle-icone {
