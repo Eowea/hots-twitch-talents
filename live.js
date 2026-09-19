@@ -69,9 +69,21 @@ async function readBattletags() {
 
 function attachNames(game, battletags) {
   if (battletags.length === 0) return;
-  for (const p of game.joueurs.values()) {
-    if (p.slot !== null && p.slot < battletags.length) p.battletag = battletags[p.slot];
-  }
+
+  /* Le lobby ne liste que les joueurs HUMAINS, dans l'ordre des slots — pas
+     les dix places. Indexer par le numero de slot marchait tant que la partie
+     etait pleine d'humains, et se decalait des qu'une IA occupait une place :
+     contre l'IA, le pseudo du diffuseur se posait sur le heros du slot 0, un
+     bot, pendant que son propre heros restait anonyme.
+
+     On apparie donc le i-eme battletag au i-eme humain. */
+  const humains = [...game.joueurs.values()]
+    .filter((p) => p.humain === true && p.slot !== null)
+    .sort((a, b) => a.slot - b.slot);
+
+  humains.forEach((p, i) => {
+    if (i < battletags.length) p.battletag = battletags[i];
+  });
 }
 
 /* =========================================================================
