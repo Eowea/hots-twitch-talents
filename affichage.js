@@ -76,11 +76,13 @@ function attente() {
 
 function partie(charge) {
   const talents = charge.j.reduce((n, j) => n + (j.t ? j.t.length : 0), 0);
-  surPlace(`  ${texteDe('enCours', {
-    temps: mmss(charge.t),
-    joueurs: charge.j.length,
-    talents,
-  })}`);
+
+  /* Le niveau plutôt que le nombre de joueurs : il y en a dix à chaque
+     partie, l'annoncer n'apprend rien. Le niveau, lui, avance — et c'est ce
+     qui prouve d'un coup d'œil que le lecteur suit bien la partie. */
+  const niveau = charge.j.reduce((max, j) => Math.max(max, j.l || 0), 0);
+
+  surPlace(`  ${texteDe('enCours', { temps: mmss(charge.t), niveau, talents })}`);
 }
 
 function finPartie() {
@@ -105,6 +107,18 @@ function ennui(texte, conseil) {
   dire();
   dire(`  ${texte}`);
   if (conseil) dire(`  ${conseil}`);
+  dire();
+}
+
+/* La première publication réussie, annoncée une seule fois. Sans elle, un
+   streamer qui a tout branché correctement voit « En attente d'une partie »
+   puis plus rien : aucune preuve que le service ait seulement répondu. */
+let annonce = false;
+
+function relie() {
+  if (annonce) return;
+  annonce = true;
+  dire(`  ${texteDe('relie')}`);
   dire();
 }
 
@@ -139,6 +153,7 @@ module.exports = {
   DETAIL,
   dire,
   demarrage,
+  relie,
   attente,
   partie,
   finPartie,

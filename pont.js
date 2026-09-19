@@ -188,6 +188,7 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
 
       derniereEmpreinte = signature;
       derniere = Date.now();
+      vue.relie();
       vue.retabli();
 
       if (charge.j.length) vue.partie(charge);

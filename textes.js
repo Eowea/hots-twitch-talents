@@ -46,13 +46,14 @@ const TEXTES = {
     banniere: 'TALENTS — lecteur de parties',
     chaine: 'Chaîne {canal}',
     laisserOuvert: 'Laisse cette fenêtre ouverte pendant que tu joues.',
-    peutReduire: "Tu peux la réduire : elle n'a rien à afficher d'important.",
+    peutReduire: 'Tu peux la réduire : elle se débrouille seule.',
 
     /* La partie */
+    relie: "Relié à ta chaîne. Il n'y a plus rien à régler.",
     attente: "En attente d'une partie. Lance Heroes of the Storm.",
-    enCours: 'Partie en cours — {temps}  ·  {joueurs} joueurs  ·  {talents} talents suivis',
+    enCours: 'Partie en cours   {temps}   niveau {niveau}   {talents} talents',
     terminee: 'Partie terminée.',
-    resteVisible: "Le tableau reste affiché chez tes viewers jusqu'à la prochaine partie.",
+    resteVisible: "Le tableau reste chez tes viewers jusqu'à la prochaine partie.",
 
     /* Les ennuis */
     retabli: 'Connexion rétablie.',
@@ -95,11 +96,12 @@ const TEXTES = {
     banniere: 'TALENTS — game reader',
     chaine: 'Channel {canal}',
     laisserOuvert: 'Leave this window open while you play.',
-    peutReduire: 'You can minimise it: it has nothing important to show.',
+    peutReduire: 'You can minimise it: it looks after itself.',
 
     /* The game */
+    relie: 'Connected to your channel. Nothing left to set up.',
     attente: 'Waiting for a game. Start Heroes of the Storm.',
-    enCours: 'Game in progress — {temps}  ·  {joueurs} players  ·  {talents} talents tracked',
+    enCours: 'Game in progress   {temps}   level {niveau}   {talents} talents',
     terminee: 'Game over.',
     resteVisible: "The panel stays on your viewers' screens until the next match.",
 
