@@ -58,6 +58,12 @@ const INTERVALLE_MIN = 2000;
    Six messages par minute au pire : très loin du plafond de Twitch. */
 const RAPPEL = 10000;
 
+/* Une fois la partie finie, le tableau ne bouge plus mais doit rester
+   disponible pour qui ouvre le panneau plus tard. On continue donc de le
+   republier, beaucoup plus lentement : 288 appels par jour au lieu de 8 640
+   si le lecteur reste ouvert toute la journee. */
+const RAPPEL_FINI = 5 * 60 * 1000;
+
 /* =========================================================================
    APPAIRAGE
 
@@ -204,7 +210,8 @@ function creerEnvoyeur({ ebs, canal, jeton }) {
      pas celui qu'on avait envoyé — pour que le chrono du viewer se recale
      toutes les dix secondes sur celui de la partie. */
   setInterval(() => {
-    if (differe || !dernierEtat || Date.now() - derniere < RAPPEL) return;
+    if (differe || !dernierEtat) return;
+    if (Date.now() - derniere < (dernierEtat.f ? RAPPEL_FINI : RAPPEL)) return;
 
     /* Et il s'arrete des qu'il n'y a plus de partie. Sans cette condition, un
        lecteur laisse ouvert toute la journee republierait un tableau vide
@@ -276,16 +283,26 @@ function suivrePartie(envoyer) {
   // dirait « partie terminée » au premier coup d'œil dans un dossier vide.
   let enPartie = false;
 
+  /* Le dernier tableau publie. A la fin d'une partie on ne l'efface pas : il
+     reste affiche chez les viewers jusqu'a ce que la suivante le remplace. */
+  let derniere = null;
+
   live.watchGame((tableau) => {
     if (tableau === null) {
-      if (enPartie) { vue.finPartie(); vue.attente(); enPartie = false; }
-      envoyer(live.CHARGE_VIDE);
+      if (!enPartie) return;
+      vue.finPartie();
+      vue.attente();
+      enPartie = false;
+
+      /* Un dernier envoi, marque « fini » : l'extension y lit qu'elle doit
+         arreter le chrono, et le pont qu'il peut espacer ses rappels. */
+      if (derniere && derniere.j.length) envoyer({ ...derniere, f: 1 });
       return;
     }
 
-    const charge = live.chargeUtile(tableau);
-    if (!enPartie && charge.j.length) enPartie = true;
-    envoyer(charge);
+    derniere = live.chargeUtile(tableau);
+    if (!enPartie && derniere.j.length) enPartie = true;
+    envoyer(derniere);
   });
 }
 
@@ -315,13 +332,19 @@ function rejouer(envoyer, fichier, vitesse) {
       curseur++;
     }
     live.attachNames(partie, battletags);
-    envoyer(live.chargeUtile(tracker.table(partie), carte));
+    const charge = live.chargeUtile(tracker.table(partie), carte);
+    envoyer(charge);
+
     if (curseur >= evenements.length) {
       clearInterval(minuterie);
       /* Les envois sont limités à un toutes les deux secondes : en rejeu
          accéléré, la file n'est pas vide quand la partie s'achève. On laisse
          passer le dernier avant d'annoncer la fin. */
-      setTimeout(() => vue.finPartie(), INTERVALLE_MIN + 200);
+      setTimeout(() => {
+        vue.finPartie();
+        // Comme en partie réelle : le tableau reste, mais le chrono s'arrête.
+        if (charge.j.length) envoyer({ ...charge, f: 1 });
+      }, INTERVALLE_MIN + 200);
     }
   }, 1000);
 }

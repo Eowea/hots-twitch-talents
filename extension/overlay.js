@@ -329,11 +329,19 @@ function afficher(etat) {
     return;
   }
 
-  /* Le repère est posé à l'affichage, pas à la réception : le tampon de
-     retard a déjà décalé l'appel, donc cet instant est bien celui où le
-     viewer voit cette seconde de jeu. */
-  chronoBase = { seconde: etat.t || 0, depuis: Date.now() };
-  avancerChrono();
+  if (etat.f) {
+    /* Partie terminée. Le tableau reste affiché jusqu'à la suivante, mais
+       l'horloge s'arrête sur le temps final : la laisser courir donnerait
+       l'illusion d'une partie encore en cours. */
+    chronoBase = null;
+    ecrireChrono(etat.t || 0);
+  } else {
+    /* Le repère est posé à l'affichage, pas à la réception : le tampon de
+       retard a déjà décalé l'appel, donc cet instant est bien celui où le
+       viewer voit cette seconde de jeu. */
+    chronoBase = { seconde: etat.t || 0, depuis: Date.now() };
+    avancerChrono();
+  }
 
   const bans = $('#bans');
   bans.replaceChildren();

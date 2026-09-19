@@ -52,7 +52,7 @@ const TEXTES = {
     attente: "En attente d'une partie. Lance Heroes of the Storm.",
     enCours: 'Partie en cours — {temps}  ·  {joueurs} joueurs  ·  {talents} talents suivis',
     terminee: 'Partie terminée.',
-    resteVisible: 'Le tableau reste visible quelques minutes chez tes viewers.',
+    resteVisible: "Le tableau reste affiché chez tes viewers jusqu'à la prochaine partie.",
 
     /* Les ennuis */
     retabli: 'Connexion rétablie.',
@@ -101,7 +101,7 @@ const TEXTES = {
     attente: 'Waiting for a game. Start Heroes of the Storm.',
     enCours: 'Game in progress — {temps}  ·  {joueurs} players  ·  {talents} talents tracked',
     terminee: 'Game over.',
-    resteVisible: 'The panel stays visible to your viewers for a few minutes.',
+    resteVisible: "The panel stays on your viewers' screens until the next match.",
 
     /* Trouble */
     retabli: 'Connection restored.',
