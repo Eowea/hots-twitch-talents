@@ -95,7 +95,8 @@ audience: hero portraits, talent icons and player display names.
 
 CHANGELOG - version 0.0.2
 
-This version answers the two points raised in the review of 0.0.1.
+This version answers both points raised in the review of 0.0.1, and one
+further issue found while re-reading the guidelines.
 
 - 4.5, off-site linking: the "BUILDS SITE" button has been REMOVED from all
   three views. The extension now contains no link out of Twitch at all. The
@@ -105,5 +106,10 @@ This version answers the two points raised in the review of 0.0.1.
 - 4.1, required images: a screenshot of the running extension, plus the
   300x200 and 100x100 discovery images, have been added before this
   submission rather than after moving to hosted test.
+- 3.4, mobile layout: the panel and mobile views could not scroll, because a
+  rule meant for the video overlay was applied to all three views. With ten
+  players the table is 621 px tall while a panel is 496 px, so the bottom of
+  the second team was cut off and unreachable. Both views now scroll; the
+  overlay still does not, since it is scaled to fit the player.
 
-Nothing else changed: same data, same behaviour, same permissions.
+Nothing else changed: same data, same permissions, same domains.
