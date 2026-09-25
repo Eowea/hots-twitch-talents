@@ -112,4 +112,14 @@ further issue found while re-reading the guidelines.
   the second team was cut off and unreachable. Both views now scroll; the
   overlay still does not, since it is scaled to fit the player.
 
-Nothing else changed: same data, same permissions, same domains.
+- 3.3, mobile load time: the talent descriptions, which are two thirds of the
+  data and are only used by the tooltip, have been moved to a second file that
+  is fetched on the first hover instead of at page load. The initial load drops
+  from 786 KB to 322 KB (201 KB to 72 KB gzipped), which is about 1.2 s at
+  500 Kb/s instead of 3.3 s.
+
+One data correction, unrelated to the review: two Abathur talents had their
+tiers swapped in the source database. Survival Instincts is tier 1 and Locust
+Brood is tier 16, as in the game.
+
+Nothing else changed: same behaviour, same permissions, same domains.

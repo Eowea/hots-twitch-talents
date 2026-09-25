@@ -66,7 +66,54 @@ async function chargerTable() {
   for (const [id, hero] of Object.entries(table.heros)) {
     for (const alias of hero.alias) if (!indexHeros.has(alias)) indexHeros.set(alias, id);
   }
+
+  /* Chaque talent retient son héros et son rang : c'est par là qu'on ira
+     chercher sa description dans l'autre fichier, sans l'y répéter. Posé en
+     mémoire au chargement, jamais transmis. */
+  for (const [id, hero] of Object.entries(table.heros)) {
+    hero.talents.forEach((talent, rang) => {
+      talent.h = id;
+      talent.rang = rang;
+    });
+  }
 }
+
+/* =========================================================================
+   LES DESCRIPTIONS
+
+   Elles pèsent les deux tiers de la table et ne servent qu'à l'infobulle.
+   Les charger d'entrée mettait la page mobile à 3,3 s sur un téléphone à
+   500 Kb/s, au-dessus des 3 s que Twitch demande (règle 3.3). Elles sont donc
+   dans descriptions.json, qu'on ne va chercher qu'au premier survol — un
+   viewer qui ne survole rien ne le télécharge jamais.
+
+   descriptions[heros][rang] suit l'ordre de talents.json, que generer-talents
+   écrit d'une seule passe : pas de clé répétée, pas d'identifiant à inventer.
+   ========================================================================= */
+
+let descriptions = null;
+let chargementDescriptions = null;
+
+function chargerDescriptions() {
+  if (chargementDescriptions) return chargementDescriptions;
+
+  chargementDescriptions = fetch('descriptions.json')
+    .then((reponse) => {
+      if (!reponse.ok) throw new Error(`descriptions.json : HTTP ${reponse.status}`);
+      return reponse.json();
+    })
+    .then((recu) => { descriptions = recu; })
+    /* Une description absente n'est pas une panne : le nom et le palier
+       suffisent à lire le tableau. On note, et le tableau continue. */
+    .catch((erreur) => { console.warn(erreur.message); });
+
+  return chargementDescriptions;
+}
+
+const descriptionDe = (talent) => {
+  const liste = descriptions && descriptions[talent.h];
+  return liste ? enLangue(liste[talent.rang]) : '';
+};
 
 const trouverHeros = (id) => table.heros[indexHeros.get(aplatir(id))] || null;
 
@@ -463,8 +510,22 @@ function remplirInfobulle(talent) {
   texte.className = 'infobulle-texte';
   // textContent, jamais innerHTML : ces textes viennent d'un fichier de
   // donnees, et rien ne justifie de leur laisser injecter du balisage.
-  texte.textContent = enLangue(talent.d);
+  texte.textContent = descriptionDe(talent);
   if (texte.textContent) infobulle.append(texte);
+
+  /* Premier survol : le fichier n'est pas encore arrivé. On le demande, et on
+     complète l'infobulle si elle montre toujours ce talent quand il arrive.
+     Sinon le viewer est déjà passé ailleurs, et il n'y a rien à corriger. */
+  if (!descriptions) {
+    chargerDescriptions().then(() => {
+      if (talentAffiche !== talent || !infobulle || infobulle.hidden) return;
+      const tardive = descriptionDe(talent);
+      if (!tardive) return;
+      texte.textContent = tardive;
+      if (!texte.isConnected) infobulle.append(texte);
+      if (caseAffichee) placerInfobulle(caseAffichee); // sa taille a changé
+    });
+  }
 }
 
 /* Au-dessus de la case si la place le permet, en dessous sinon, et toujours
@@ -484,17 +545,26 @@ function placerInfobulle(case_) {
   infobulle.style.top = `${Math.round(y)}px`;
 }
 
+/* Ce que l'infobulle montre en ce moment, et l'élément qu'elle désigne. Une
+   description qui arrive en retard ne doit compléter que l'infobulle qui
+   l'attend encore. */
+let talentAffiche = null;
+let caseAffichee = null;
+
 function montrerInfobulle(case_) {
   const talent = infoDeLElement.get(case_);
   if (!talent) return;
 
   if (!infobulle) infobulle = creerInfobulle();
+  talentAffiche = talent;
+  caseAffichee = case_;
   remplirInfobulle(talent);
   infobulle.hidden = false;
   placerInfobulle(case_); // Apres l'affichage : sa taille depend du texte.
 }
 
 function cacherInfobulle() {
+  talentAffiche = null;
   if (infobulle) infobulle.hidden = true;
 }
 

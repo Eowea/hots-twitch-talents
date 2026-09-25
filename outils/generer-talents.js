@@ -13,7 +13,21 @@
 
      node outils/generer-talents.js
 
-   Écrit extension/talents.json. À relancer après une mise à jour de BUILDS.
+   Écrit DEUX fichiers, et c'est voulu :
+
+     talents.json        noms, paliers, icônes, portraits, rôles, alias
+     descriptions.json   le texte de chaque talent, rien d'autre
+
+   Les descriptions pèsent les deux tiers de la table, et ne servent qu'à
+   l'infobulle. Les charger d'entrée coûtait 3,3 s sur un téléphone à
+   500 Kb/s, au-dessus des 3 s que Twitch demande (règle 3.3). Elles sont
+   donc à part, et l'overlay ne va les chercher qu'au premier survol.
+
+   descriptions.json suit l'ordre de talents.json : pour le héros « abathur »,
+   la description du troisième talent est descriptions.abathur[2]. Pas de clé
+   répétée, pas d'identifiant à inventer.
+
+   À relancer après une mise à jour de BUILDS.
    ========================================================================= */
 'use strict';
 
@@ -25,6 +39,7 @@ const { knowsHero, HERO_TOKENS } = require('../heroes.js');
 const SITE = 'https://eowea.github.io/builds/';
 const LOCAL = path.join(os.homedir(), 'Documents', 'GitHub', 'builds', 'data.js');
 const SORTIE = path.join(__dirname, '..', 'extension', 'talents.json');
+const SORTIE_TEXTES = path.join(__dirname, '..', 'extension', 'descriptions.json');
 
 // Préfixes communs à toutes les images : on ne les stocke pas mille fois.
 const PREFIXE_ICONE = 'assets/heroes/base_spells/';
@@ -75,6 +90,10 @@ async function main() {
   const HEROES = new Function(`${source}; return HEROES;`)();
 
   const heros = {};
+  /* La description fait l'infobulle : sans elle, « Aura vampirique » n'apprend
+     rien à un viewer qui ne connaît pas le héros. Les deux langues voyagent,
+     pour le jour où l'extension sortira de France — mais dans leur fichier. */
+  const descriptions = {};
   let talents = 0;
   let sansIcone = 0;
 
@@ -97,13 +116,14 @@ async function main() {
           fr: t.name.fr,
           niveau: t.level,
           icone: raccourcir(t.icon, PREFIXE_ICONE),
-          /* La description fait l'infobulle : sans elle, « Aura vampirique »
-             n'apprend rien à un viewer qui ne connaît pas le héros. Les deux
-             langues voyagent, pour le jour où l'extension sortira de France. */
-          d: { fr: (t.description && t.description.fr) || '', en: (t.description && t.description.en) || '' },
         };
       }),
     };
+
+    descriptions[h.id] = (h.talentPool || []).map((t) => ({
+      fr: (t.description && t.description.fr) || '',
+      en: (t.description && t.description.en) || '',
+    }));
   }
 
   const table = {
@@ -116,10 +136,12 @@ async function main() {
 
   fs.mkdirSync(path.dirname(SORTIE), { recursive: true });
   fs.writeFileSync(SORTIE, JSON.stringify(table), 'utf8');
+  fs.writeFileSync(SORTIE_TEXTES, JSON.stringify(descriptions), 'utf8');
 
   const ko = fs.statSync(SORTIE).size / 1024;
+  const koTextes = fs.statSync(SORTIE_TEXTES).size / 1024;
   console.log(`${Object.keys(heros).length} héros, ${talents} talents -> ${SORTIE}`);
-  console.log(`${ko.toFixed(0)} Ko`);
+  console.log(`${ko.toFixed(0)} Ko au chargement, ${koTextes.toFixed(0)} Ko de descriptions à la demande`);
   if (sansIcone) console.log(`${sansIcone} talents sans icône`);
 
   // Ce qui n'est pas dans le dictionnaire du lecteur ne sera jamais résolu.

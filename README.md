@@ -205,7 +205,8 @@ Les décisions qui ont tenu :
 | `extension/live_config.html` | l'état du lecteur pendant le direct |
 | `extension/overlay.js` | le code commun aux trois surfaces |
 | `extension/langue.js` | détection de la langue du viewer et textes de l'interface |
-| `extension/talents.json` | la table des talents, dans les deux langues |
+| `extension/talents.json` | noms, paliers, icônes, portraits, rôles, alias |
+| `extension/descriptions.json` | le texte des talents, chargé au premier survol |
 | `fonction/` | le service sans état : appairage et diffusion |
 | `outils/verifier-langue.js` | refuse une traduction incomplète, des deux côtés |
 | `outils/archiver.js` | fabrique `build/extension.zip` pour la console Twitch |
@@ -286,6 +287,18 @@ parties, 175 minutes de jeu :
 Soit ~60 diffuseurs actifs sur le palier gratuit de Cloudflare
 (100 000 requêtes/jour) au lieu de ~20. Les viewers ne coûtent rien : ils
 reçoivent le PubSub de Twitch, qui ne touche pas le service.
+
+**Les descriptions sont à part.** Elles pèsent les deux tiers de la table et
+ne servent qu'à l'infobulle : les charger d'entrée mettait la page mobile à
+3,3 s sur un téléphone à 500 Kb/s, au-dessus des 3 s que Twitch demande
+(règle 3.3). Elles vivent donc dans `descriptions.json`, que l'overlay ne va
+chercher qu'au premier survol — un viewer qui ne survole rien ne le télécharge
+jamais. Le chargement initial tombe de 786 à 322 Ko, soit 72 Ko une fois
+compressé, et de 3,3 à 1,2 s. Le nom et le palier, eux, restent immédiats.
+
+`descriptions[heros][rang]` suit l'ordre de `talents.json`, que
+`generer-talents.js` écrit d'une seule passe : pas de clé répétée, pas
+d'identifiant à inventer. Vérifié sur les 1941 talents, aucun décalage.
 
 **La charge utile est compacte** (identifiants bruts, ~2,7 Ko au pire pour dix
 joueurs) parce que le PubSub de Twitch plafonne à 5 Ko par message. C'est le

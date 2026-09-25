@@ -24,7 +24,7 @@ const RACINE = path.join(__dirname, '..');
 const EXTENSION = path.join(RACINE, 'extension');
 
 // Doit suivre le ?v= des pages : l'archive et le cache du navigateur en dépendent.
-const VERSION_ATTENDUE = '21';
+const VERSION_ATTENDUE = '22';
 
 const ACCENTS = /[éèêëàâçôöûùïîœÉÈÀÇÊÔÎÙ]/;
 
