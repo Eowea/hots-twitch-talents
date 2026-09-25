@@ -10,9 +10,9 @@ et le héros et son rôle derrière chaque portrait.
 
 ## État actuel
 
-**Soumise à la vérification de Twitch le 19 septembre 2026.** Tout est écrit,
-mesuré et en place : le lecteur, les trois surfaces, le service, les deux
-langues, les pages légales.
+**Refusée une première fois le 26 septembre 2026, corrigée le jour même.**
+Tout est écrit, mesuré et en place : le lecteur, les trois surfaces, le
+service, les deux langues, les pages légales.
 
 ```
 Partie à 18m08   bans : Garrosh, Mei, Chromie, Falstad, Ana, Genji
@@ -23,8 +23,19 @@ Partie à 18m08   bans : Garrosh, Mei, Chromie, Falstad, Ana, Genji
    Li-Ming        MichałDudek   niv 20   WizardAetherWalker > ...
 ```
 
-La réponse de Twitch est attendue sous 5 à 14 jours ouvrés. Reste ensuite à
-distribuer `build/lecteur.exe` par une release GitHub.
+Twitch a relevé deux points sur la version 0.0.1, tous deux traités :
+
+- **Règle 4.5, lien sortant.** Le bouton qui ouvrait EOWEA BUILDS a été retiré
+  des trois vues : l'extension ne contient plus aucun lien hors de Twitch. Leur
+  motif : le site visé est celui du développeur, pas un site communautaire.
+  `eowea.github.io` reste déclaré **côté images** — les portraits et les icônes
+  en viennent — ce que la règle ne vise pas.
+- **Règle 4.1, visuels obligatoires.** Une capture de l'interface réelle et
+  deux images de découverte, 300×200 et 100×100, sont dans `visuels/`. Elles
+  sont taillées dans une vraie partie, draft complet. Piège à connaître : une
+  image ajoutée **après** le passage en test hébergé n'est pas vue par l'examen.
+
+Reste ensuite à distribuer `build/lecteur.exe` par une release GitHub.
 
 ## Ce qui a été établi
 
@@ -204,6 +215,7 @@ Les décisions qui ont tenu :
 | `privacy.html`, `terms.html` | les pages légales, en français et en anglais |
 | `fiche-extension.md` | tout ce qui se saisit dans la console Twitch |
 | `guide-examen.txt` | le guide remis à l'équipe de vérification |
+| `visuels/` | la capture et les images de découverte de la console Twitch |
 
 `mpq.js` et `bzip2.js` ne servent pas en direct : ils donnent accès aux replays
 déjà sur le disque, ce qui permet de tester sans lancer le jeu. `bzip2.js` a
@@ -454,7 +466,7 @@ propre code. Rien n'est partagé entre chaînes, sauf le quota Cloudflare —
 
 ## Ce qui reste
 
-- **La vérification de Twitch**, puis la mise en ligne publique.
+- **La vérification de Twitch**, deuxième passage, puis la mise en ligne.
 - **Distribuer `lecteur.exe`** par une release GitHub, une fois l'extension
   approuvée.
 - **Une police embarquée.** Twitch bloque les polices externes ; l'extension

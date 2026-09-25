@@ -41,11 +41,7 @@ HOW TO TEST WITHOUT A LIVE GAME
 3. The language follows the VIEWER, not the channel. A viewer whose Twitch
    language is French gets French, everyone else gets English. Switching your
    Twitch language and reloading the page switches the panel.
-4. The "BUILDS SITE" button in the panel header opens
-   https://eowea.github.io/builds/ in a new tab, with the off-site arrow
-   required by guideline 4.6.2. That site is my own free Heroes of the Storm
-   build database: nothing is sold, no account is needed, no advertising, and
-   it duplicates no Twitch functionality.
+4. There is no link out of Twitch anywhere in the extension.
 
 HOW TO TEST DURING A LIVE MATCH
 
@@ -97,6 +93,17 @@ is no viewer input of any kind, therefore no third-party content to report,
 filter or block. No native API is extended or exposed. The content is general
 audience: hero portraits, talent icons and player display names.
 
-CHANGELOG
+CHANGELOG - version 0.0.2
 
-First submission. No previous version of this extension has been reviewed.
+This version answers the two points raised in the review of 0.0.1.
+
+- 4.5, off-site linking: the "BUILDS SITE" button has been REMOVED from all
+  three views. The extension now contains no link out of Twitch at all. The
+  domain eowea.github.io remains declared as an image domain only - hero
+  portraits and talent icons are loaded from it - and nothing in the
+  extension links to it or points viewers to it.
+- 4.1, required images: a screenshot of the running extension, plus the
+  300x200 and 100x100 discovery images, have been added before this
+  submission rather than after moving to hosted test.
+
+Nothing else changed: same data, same behaviour, same permissions.

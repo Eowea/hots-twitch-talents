@@ -114,14 +114,14 @@ heroes of the storm, hots, talents, build, moba, esports, overlay, panel
 |---|---|
 | **URL Fetching Domains** | `hots-talents.eowea.workers.dev` |
 | **Image Domains** | `eowea.github.io` |
-| **Liste blanche des URL pour le panneau** | `https://eowea.github.io/builds/` |
 
 Rien d'autre. L'extension ne charge aucune police externe et n'appelle aucun
 autre service.
 
-Attention à la forme : la console attend une **URL complète**, avec le `https://`
-et la barre oblique finale. Un domaine nu est accepté à la saisie puis ignoré,
-et le lien SITE BUILDS se ferme sans un mot dans la console du navigateur.
+`eowea.github.io` reste déclaré **côté images** : c'est de là que viennent les
+portraits et les icônes de talents. Ce n'est pas un lien sortant, et la règle
+4.5 ne le vise pas. En revanche la **liste blanche des URL du panneau doit être
+vide** : il n'y a plus rien à ouvrir.
 
 ---
 
@@ -171,22 +171,35 @@ d'accessibilité qu'Apple relève.
 
 ---
 
-## 7. Captures d'écran et icônes
+## 7. Captures d'écran et images de découverte
 
-La console indique les dimensions exactes attendues ; respecte-les au pixel,
-c'est un motif de refus courant. Ce qu'il faut montrer :
+**C'est ce qui a fait refuser la version 0.0.1** (règle 4.1). Twitch en exige
+trois, et les trois sont obligatoires :
 
-1. **Le panneau, partie en cours** — dix joueurs, talents remplis jusqu'au
-   palier 13 ou 16. C'est la capture qui vend l'extension : prends-la sur une
-   partie serrée, pas sur un début de partie vide.
-2. **La superposition ouverte** par-dessus une image de jeu, les deux équipes
-   côte à côte.
-3. **Une infobulle** ouverte sur un talent, pour montrer la description.
-4. **La vue mobile**, si la console en demande une : la même partie qu'en 1,
-   prise à la largeur d'un téléphone.
+| Ce qu'il faut | Taille | Fichier prêt |
+|---|---|---|
+| Au moins une capture, montrant l'interface réelle | 1920×1080 | `visuels/capture-1920x1080-en.png` |
+| Image de découverte | 300×200 | `visuels/decouverte-300x200.png` |
+| Image de découverte | 100×100 | `visuels/decouverte-100x100.png` |
+
+La version française de la capture est à côté, `capture-1920x1080-fr.png`, si
+tu préfères montrer l'extension en français.
+
+Les trois sont prises sur une vraie partie — draft complet, six bans, dix
+joueurs, les sept paliers remplis. Twitch écrit que la capture **doit** montrer
+l'interface réelle : une maquette ou un visuel promotionnel se fait refuser.
+
+> **Le piège de l'ordre.** Twitch le dit noir sur blanc : une capture ajoutée
+> **après** le passage en test hébergé n'est pas vue par l'examen. Il faut
+> alors repasser la version en revue pour qu'il la prenne. Donc : envoyer
+> l'archive, poser les trois images, **puis seulement** soumettre.
+
+Vérifie les dimensions annoncées par la console au moment de téléverser : si
+elle en demande d'autres, les fichiers se retaillent en une minute depuis la
+capture 1920×1080.
 
 L'icône doit représenter l'extension telle qu'elle est — Twitch refuse les
-icônes trompeuses. L'hexagone doré du bouton, sur fond sombre, fait l'affaire.
+icônes trompeuses.
 
 > **Interdit** : la moindre marque Twitch dans les captures ou l'icône.
 
@@ -270,11 +283,7 @@ HOW TO TEST WITHOUT A LIVE GAME
 3. The language follows the VIEWER, not the channel. A viewer whose Twitch
    language is French gets French, everyone else gets English. Switching your
    Twitch language and reloading the page switches the panel.
-4. The "BUILDS SITE" button in the panel header opens
-   https://eowea.github.io/builds/ in a new tab, with the off-site arrow
-   required by guideline 4.6.2. That site is my own free Heroes of the Storm
-   build database: nothing is sold, no account is needed, no advertising, and
-   it duplicates no Twitch functionality.
+4. There is no link out of Twitch anywhere in the extension.
 
 HOW TO TEST DURING A LIVE MATCH
 
@@ -326,9 +335,20 @@ is no viewer input of any kind, therefore no third-party content to report,
 filter or block. No native API is extended or exposed. The content is general
 audience: hero portraits, talent icons and player display names.
 
-CHANGELOG
+CHANGELOG - version 0.0.2
 
-First submission. No previous version of this extension has been reviewed.
+This version answers the two points raised in the review of 0.0.1.
+
+- 4.5, off-site linking: the "BUILDS SITE" button has been REMOVED from all
+  three views. The extension now contains no link out of Twitch at all. The
+  domain eowea.github.io remains declared as an image domain only - hero
+  portraits and talent icons are loaded from it - and nothing in the
+  extension links to it or points viewers to it.
+- 4.1, required images: a screenshot of the running extension, plus the
+  300x200 and 100x100 discovery images, have been added before this
+  submission rather than after moving to hosted test.
+
+Nothing else changed: same data, same behaviour, same permissions.
 ```
 
 Le mieux reste quand même de **soumettre en étant en direct**, en train de
@@ -343,10 +363,11 @@ n'a plus de question à poser.
 - [ ] `build/extension.zip` est envoyé, et les cinq fichiers de la console
       pointent sur `panneau.html`, `video_overlay.html`, `config.html`,
       `live_config.html` et `mobile.html` — attention, c'est déjà tombé une fois.
-- [ ] Les deux domaines sont déclarés, et la liste blanche du panneau porte
-      `https://eowea.github.io/builds/`, avec le `https://` et la barre finale.
-- [ ] Le lien SITE BUILDS s'ouvre bien depuis le panneau installé.
-- [ ] Les captures montrent l'extension telle qu'elle est.
+- [ ] Les deux domaines sont déclarés, et la **liste blanche des URL du
+      panneau est vide** — il n'y a plus de lien à ouvrir.
+- [ ] Les **trois images** sont posées : la capture 1920×1080, la découverte
+      300×200, la découverte 100×100. C'est le motif du premier refus.
+- [ ] Elles ont été posées **avant** la soumission, pas après.
 - [ ] Le lecteur tourne et le panneau se remplit sur ta chaîne.
 - [ ] La version soumise est **activée sur twitch.tv/eowea** — c'est la chaîne
       que tu déclares pour l'examen, et l'examinateur n'y verra rien sinon.

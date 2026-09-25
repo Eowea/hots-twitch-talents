@@ -61,10 +61,6 @@ const TEXTES = {
     Tank: 'Tank',
     banni: 'Banni',
 
-    /* Le lien vers le site de builds. La flèche signale qu'il quitte Twitch,
-       comme la règle 4.6.2 de leurs conditions l'exige. */
-    voirBuilds: 'SITE BUILDS',
-    voirBuildsTitre: 'Ouvrir EOWEA BUILDS dans un nouvel onglet',
     attente: "En attente d'une partie…",
     fermerTableau: 'Fermer le tableau',
     niveau: 'niveau {n}',
@@ -140,8 +136,6 @@ const TEXTES = {
     Tank: 'Tank',
     banni: 'Banned',
 
-    voirBuilds: 'BUILDS SITE',
-    voirBuildsTitre: 'Open EOWEA BUILDS in a new tab',
     attente: 'Waiting for a game…',
     fermerTableau: 'Close the panel',
     niveau: 'level {n}',

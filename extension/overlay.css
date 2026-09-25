@@ -149,34 +149,6 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 .pousse { flex-grow: 1; }
 
 /* =========================================================================
-   LE LIEN VERS BUILDS
-
-   Twitch exige un indicateur visible quand un lien quitte la plateforme
-   (règle 4.6.2) : c'est la flèche. Le cadre le distingue d'un simple mot du
-   titre, sans pour autant crier plus fort que « TALENTS ».
-   ========================================================================= */
-
-.lien-builds {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
-  border: 1px solid var(--or-filet);
-  border-radius: 4px;
-  color: var(--or);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.lien-builds:hover,
-.lien-builds:focus-visible { border-color: var(--or); color: var(--or-vif); }
-
-.hors-site { font-size: 11px; opacity: 0.75; }
-
-/* =========================================================================
    LES BANS
 
    Ils vivent dans le bandeau de l'équipe qui les a posés, pas dans l'en-tête :
@@ -430,11 +402,6 @@ body[data-mode="panneau"] {
 }
 
 [data-mode="panneau"] .titre { font-size: 14px; letter-spacing: 0.08em; }
-[data-mode="panneau"] .lien-builds {
-  padding: 3px 7px;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-}
 
 /* Trois bans par equipe dans 318 px : on les resserre, l'infobulle prenant
    le relais pour qui veut lire un nom. */
@@ -489,7 +456,6 @@ body[data-mode="panneau"] {
   [data-mode="panneau"] .identite .tag { font-size: clamp(9px, 2.8vw, 12px); }
   [data-mode="panneau"] .paliers span { font-size: clamp(10px, 2.8vw, 12px); }
   [data-mode="panneau"] .ban { width: clamp(16px, 5vw, 24px); height: auto; }
-  [data-mode="panneau"] .lien-builds { font-size: clamp(10px, 2.8vw, 12px); }
   [data-mode="panneau"] .bans-libelle { font-size: clamp(9px, 2.6vw, 11px); }
   [data-mode="panneau"] .entete { padding: clamp(9px, 3vw, 14px) clamp(10px, 3vw, 16px); }
   [data-mode="panneau"] .corps { padding: clamp(10px, 3vw, 14px); }
@@ -521,8 +487,7 @@ body[data-mode="panneau"] {
    spectateur garde le droit de zoomer où il veut. */
 [data-plateforme="mobile"] .case,
 [data-plateforme="mobile"] .portrait,
-[data-plateforme="mobile"] .ban,
-[data-plateforme="mobile"] .lien-builds { touch-action: manipulation; }
+[data-plateforme="mobile"] .ban { touch-action: manipulation; }
 
 /* Un appui maintenu sur une icône sélectionnerait le texte voisin et
    ouvrirait le menu de copie par-dessus l'infobulle. */
@@ -532,13 +497,6 @@ body[data-mode="panneau"] {
 [data-plateforme="mobile"] .identite {
   -webkit-user-select: none;
   user-select: none;
-}
-
-/* Le lien est la seule cible que le spectateur doit atteindre du pouce : il
-   lui faut la hauteur d'un vrai bouton, pas celle d'une étiquette. */
-[data-plateforme="mobile"] .lien-builds {
-  min-height: 32px;
-  padding: 6px 11px;
 }
 
 
