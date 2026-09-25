@@ -33,8 +33,6 @@
 
 html, body {
   margin: 0;
-  height: 100%;
-  overflow: hidden;
   background: transparent; /* L'extension ne doit rien masquer par défaut. */
   font-family: 'Segoe UI Semibold', 'Segoe UI', 'Roboto Condensed', system-ui, sans-serif;
   color: var(--texte);
@@ -113,6 +111,19 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 /* =========================================================================
    LE TABLEAU
    ========================================================================= */
+
+/* La superposition est une couche posée sur la vidéo : elle occupe l'écran,
+   ne défile pas, et son cadre est mis à l'échelle pour y tenir.
+
+   Le panneau et le mobile sont l'inverse : des documents dans une iframe dont
+   Twitch impose la hauteur — 496 px sur un panneau — plus courte que dix
+   joueurs. Leur interdire le défilement coupait la fin de la seconde équipe,
+   sans aucun moyen d'aller la chercher. */
+html[data-vue="overlay"],
+html[data-vue="overlay"] body {
+  height: 100%;
+  overflow: hidden;
+}
 
 .tableau {
   position: absolute;
@@ -384,6 +395,7 @@ body:not([data-mode="panneau"]) .cadre { pointer-events: auto; }
 [data-mode="panneau"] body,
 body[data-mode="panneau"] {
   background: var(--profond);
+  min-height: 100vh;
 }
 
 [data-mode="panneau"] .tableau { position: static; display: block; }
