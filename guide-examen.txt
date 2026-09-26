@@ -2,14 +2,20 @@ CHANNEL FOR REVIEW: https://www.twitch.tv/eowea
 The submitted version is installed and activated on that channel: panel,
 video overlay and mobile.
 
-SCHEDULING - PLEASE READ FIRST
+AVAILABILITY FOR REVIEW - PLEASE READ FIRST
 
-This extension includes a video overlay, so the channel has to be live for
-that view to be reviewable, and I cannot stay live continuously while the
-review is pending. Following your instructions I am flagging it here: please
-contact me at eowea.contact@gmail.com and I will go live with a real Heroes
-of the Storm match at whatever time suits your team, including outside
-European hours. I can also provide a recorded walkthrough on request.
+This extension includes a video overlay and depends on a live Heroes of the
+Storm match, so the channel needs to be live for that view to be reviewable,
+and I cannot stay live continuously while the review is pending.
+
+My availability, in Pacific Time as requested:
+
+  <<< CRENEAUX A REMPLIR >>>
+
+I am in France, so these hours are my evening and I can be flexible around
+them. If none of these windows work, or if you find the channel offline when
+you pass, please email eowea.contact@gmail.com and I will go live at whatever
+time suits your team. I can also provide a recorded walkthrough on request.
 
 The PANEL view can be reviewed at any time, live or offline. It is visible on
 the channel page permanently and shows "Waiting for a game" when no match is

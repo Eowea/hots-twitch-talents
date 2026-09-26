@@ -171,37 +171,40 @@ d'accessibilité qu'Apple relève.
 
 ---
 
-## 7. Captures d'écran et images de découverte
+## 7. Les images — onglet **Version Details**
 
-**C'est ce qui a fait refuser la version 0.0.1** (règle 4.1). Twitch en exige
-trois, et les trois sont obligatoires :
+**C'est ce qui a fait refuser la version 0.0.1** (règle 4.1). Les trois champs
+sont sur la même page, dans la section *Image Assets*, et les trois sont
+obligatoires pour passer en revue.
 
-| Ce qu'il faut | Taille | Fichier prêt |
+| Champ dans la console | Spec imposée | Fichier prêt |
 |---|---|---|
-| Au moins une capture, montrant l'interface réelle | 1920×1080 | `visuels/capture-1920x1080-en.png` |
-| Image de découverte | 300×200 | `visuels/decouverte-300x200.png` |
-| Image de découverte | 100×100 | `visuels/decouverte-100x100.png` |
+| **Logo Image** | 100×100 PNG | `visuels/logo-100x100.png` |
+| **Discovery Image** | 300×200 PNG, sans transparence | `visuels/discovery-300x200.png` |
+| **Screenshot Image** | **ratio 4:3**, minimum 1024×768, < 10 Mo | `visuels/screenshot-2048x1536-en.png` |
 
-La version française de la capture est à côté, `capture-1920x1080-fr.png`, si
-tu préfères montrer l'extension en français.
+**Le 4:3 n'est pas négociable.** La doc l'écrit noir sur blanc : « Images must
+have a 4:3 aspect ratio ». Une capture 16:9, le réflexe naturel, est refusée.
+La nôtre fait 2048×1536, soit le double du minimum.
+
+Un quatrième champ existe, **Taskbar Icon Image**, 24×24 PNG — mais il ne
+concerne que les extensions de type *Video-Component*. Si tu n'as coché que
+Panel, Video-Fullscreen et Mobile, il ne s'affiche pas.
+
+La version française de la capture est à côté, `screenshot-2048x1536-fr.png`.
+L'anglaise parlera mieux à l'examinateur et aux streamers du catalogue.
 
 Les trois sont prises sur une vraie partie — draft complet, six bans, dix
-joueurs, les sept paliers remplis. Twitch écrit que la capture **doit** montrer
-l'interface réelle : une maquette ou un visuel promotionnel se fait refuser.
+joueurs, les sept paliers remplis. La règle 4.1 demande que l'icône et la
+capture représentent fidèlement le front end : une maquette se fait refuser.
+Et **aucune marque Twitch** nulle part, règle 4.3 — donc surtout pas une
+capture prise sur une page Twitch, qui embarquerait leur logo.
 
-> **Le piège de l'ordre.** Twitch le dit noir sur blanc : une capture ajoutée
-> **après** le passage en test hébergé n'est pas vue par l'examen. Il faut
-> alors repasser la version en revue pour qu'il la prenne. Donc : envoyer
-> l'archive, poser les trois images, **puis seulement** soumettre.
-
-Vérifie les dimensions annoncées par la console au moment de téléverser : si
-elle en demande d'autres, les fichiers se retaillent en une minute depuis la
-capture 1920×1080.
-
-L'icône doit représenter l'extension telle qu'elle est — Twitch refuse les
-icônes trompeuses.
-
-> **Interdit** : la moindre marque Twitch dans les captures ou l'icône.
+> **Le piège de l'ordre.** Twitch l'écrit dans son refus : une image ajoutée
+> **après** le passage en test hébergé n'est pas vue par l'examen. Et la doc
+> ajoute que modifier les détails de version impose de repasser en test local.
+> Donc : repasser en test local, envoyer l'archive, poser les trois images,
+> revenir en test hébergé, **puis seulement** soumettre.
 
 ---
 
@@ -222,14 +225,18 @@ Submit, pas après.
 
 ### Le piège du direct
 
-Une superposition vidéo n'existe pas hors direct : Twitch le dit lui-même, une
-extension de ce type demande une chaîne **en live pendant la vérification**, et
-la vérification tombe entre 5 et 14 jours plus tard, week-ends et jours fériés
-américains non comptés. Personne ne peut rester en direct deux semaines.
+Une superposition vidéo n'existe pas hors direct, et la vérification tombe
+entre 5 et 14 jours plus tard. Personne ne peut rester en direct deux semaines.
 
-Twitch prévoit la sortie : **le signaler dans le guide**, et leur équipe prend
-contact pour caler un créneau. C'est écrit dans le texte ci-dessous, en tête,
-là où l'examinateur le lit en premier.
+La doc dit précisément quoi faire, et c'est plus précis que le courriel de
+refus : une extension qui a besoin d'un jeu ou d'un service en marche doit
+**annoncer ses créneaux de disponibilité, entre 9h et 17h heure du Pacifique,
+dans le guide**. L'équipe reprend contact si la chaîne est éteinte au moment
+où elle passe.
+
+**Le décalage joue en ta faveur.** 9h–17h PT, c'est **18h–02h à Paris** : la
+plage d'examen tombe entièrement sur tes horaires de stream. Annonce des
+créneaux larges, tu n'auras presque rien à changer à tes habitudes.
 
 Deux choses jouent en ta faveur : le **panneau reste visible hors direct**, où
 il affiche « En attente d'une partie » — la mise en page, les langues, le lien
@@ -244,14 +251,20 @@ CHANNEL FOR REVIEW: https://www.twitch.tv/eowea
 The submitted version is installed and activated on that channel: panel,
 video overlay and mobile.
 
-SCHEDULING - PLEASE READ FIRST
+AVAILABILITY FOR REVIEW - PLEASE READ FIRST
 
-This extension includes a video overlay, so the channel has to be live for
-that view to be reviewable, and I cannot stay live continuously while the
-review is pending. Following your instructions I am flagging it here: please
-contact me at eowea.contact@gmail.com and I will go live with a real Heroes
-of the Storm match at whatever time suits your team, including outside
-European hours. I can also provide a recorded walkthrough on request.
+This extension includes a video overlay and depends on a live Heroes of the
+Storm match, so the channel needs to be live for that view to be reviewable,
+and I cannot stay live continuously while the review is pending.
+
+My availability, in Pacific Time as requested:
+
+  <<< CRENEAUX A REMPLIR >>>
+
+I am in France, so these hours are my evening and I can be flexible around
+them. If none of these windows work, or if you find the channel offline when
+you pass, please email eowea.contact@gmail.com and I will go live at whatever
+time suits your team. I can also provide a recorded walkthrough on request.
 
 The PANEL view can be reviewed at any time, live or offline. It is visible on
 the channel page permanently and shows "Waiting for a game" when no match is
