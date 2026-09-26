@@ -19,8 +19,8 @@ time suits your team. I can also provide a recorded walkthrough on request.
 
 The PANEL view can be reviewed at any time, live or offline. It is visible on
 the channel page permanently and shows "Waiting for a game" when no match is
-running. Layout, viewer language, the off-site link and both broadcaster
-pages can all be checked without the channel being live.
+running. Layout, viewer language and both broadcaster pages can all be
+checked without the channel being live.
 
 WHAT THE EXTENSION DOES
 
