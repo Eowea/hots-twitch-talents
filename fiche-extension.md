@@ -366,7 +366,6 @@ further issue found while re-reading the guidelines.
   players the table is 621 px tall while a panel is 496 px, so the bottom of
   the second team was cut off and unreachable. Both views now scroll; the
   overlay still does not, since it is scaled to fit the player.
-
 - 3.3, mobile load time: the talent descriptions, which are two thirds of the
   data and are only used by the tooltip, have been moved to a second file that
   is fetched on the first hover instead of at page load. The initial load drops
